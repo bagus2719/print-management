@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+.venv/
+
+# Instance Folder (berisi database dan file rahasia)
+instance/
+
+# Uploads (jika Anda tidak ingin file upload masuk ke repo)
+print_app/uploads/
+
+# IDE/Editor specific
+.vscode/
+.idea/

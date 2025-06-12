@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h3 class="mb-0"><i class="fas fa-tasks mr-2"></i>Manajemen Pekerjaan Cetak</h3>
+    </div>
+    <div class="card-body">
+        <div class="card mb-4">
+            <div class="card-body bg-light">
+                <form method="GET" action="{{ url_for('admin.dashboard') }}">
+                    <div class="row align-items-end">
+                        <div class="col-md-3 mb-2">
+                            <label for="status">Filter Status</label>
+                            <select name="status" id="status" class="form-control">
+                                <option value="">Semua Status</option>
+                                <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="printing" {% if current_status == 'printing' %}selected{% endif %}>Printing</option>
+                                <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="failed" {% if current_status == 'failed' %}selected{% endif %}>Failed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="user_id">Filter Pengguna</label>
+                            <select name="user_id" id="user_id" class="form-control">
+                                <option value="">Semua Pengguna</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if current_user_id|string == user.id|string %}selected{% endif %}>{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="sort_by">Urutkan Berdasarkan</label>
+                            <select name="sort_by" id="sort_by" class="form-control">
+                                <option value="time_desc" {% if current_sort_by == 'time_desc' %}selected{% endif %}>Waktu (Terbaru)</option>
+                                <option value="time_asc" {% if current_sort_by == 'time_asc' %}selected{% endif %}>Waktu (Terlama)</option>
+                                <option value="user_asc" {% if current_sort_by == 'user_asc' %}selected{% endif %}>User (A-Z)</option>
+                                <option value="cost_desc" {% if current_sort_by == 'cost_desc' %}selected{% endif %}>Biaya (Tertinggi)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter"></i> Terapkan</button>
+                            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-block mt-1"><i class="fas fa-undo"></i> Reset</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <h5 class="mb-0 text-right">
+                    Total Biaya (Hasil Filter): 
+                    <span class="font-weight-bold text-success">
+                        Rp {{ "{:,.0f}".format(total_cost_filtered).replace(',', '.') }}
+                    </span>
+                </h5>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="thead-dark text-center">
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Filename</th>
+                        <th>Detail</th>
+                        <th>Status</th>
+                        <th style="width: 210px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td class="text-center align-middle">{{ job.id }}</td>
+                        <td class="align-middle">{{ job.author.username }}</td>
+                        <td class="align-middle"><i class="far fa-file-pdf mr-2 text-danger"></i>{{ job.filename }}</td>
+                        <td class="align-middle small">
+                            {{ job.pages }} hlm &times; {{ job.copies }} kopi <br>
+                            <span class="text-muted">{{ job.print_type }} / {{ job.paper_size }}</span> <br>
+                            <strong>Kertas: 
+                                {% if job.paper_source == 'bawa_sendiri' %}
+                                    <span class="text-success">Bawa Sendiri</span>
+                                {% else %}
+                                    <span class="text-primary">Dari Kami</span>
+                                {% endif %}
+                            </strong>
+                        </td>
+                        <td class="text-center align-middle">
+                            <span class="badge status-{{ job.status }}">{{ job.status }}</span>
+                        </td>
+                        <td class="text-center align-middle">
+                            <div class="btn-group" role="group">
+                                <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='printing') }}?{{ request.query_string.decode('utf-8') }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-info" data-toggle="tooltip" title="Proses Cetak" {% if job.status != 'pending' %}disabled{% endif %}><i class="fas fa-print"></i></button>
+                                </form>
+                                <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='completed') }}?{{ request.query_string.decode('utf-8') }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success" data-toggle="tooltip" title="Tandai Selesai" {% if job.status != 'printing' %}disabled{% endif %}><i class="fas fa-check"></i></button>
+                                </form>
+                                <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='failed') }}?{{ request.query_string.decode('utf-8') }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Tandai Gagal" {% if job.status != 'printing' %}disabled{% endif %}><i class="fas fa-times"></i></button>
+                                </form>
+                                <form action="{{ url_for('admin.delete_job', job_id=job.id) }}?{{ request.query_string.decode('utf-8') }}" method="post" class="d-inline" data-form-delete>
+                                    <button type="submit" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Hapus Pekerjaan"><i class="fas fa-trash-alt"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Tidak ada pekerjaan yang cocok dengan filter Anda.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

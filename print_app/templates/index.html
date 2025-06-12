@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Pengguna{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-upload mr-2"></i>Upload File Baru</h4>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="file"><strong>Pilih File PDF:</strong></label>
+                        <div class="custom-file">
+                            <input type="file" name="file" class="custom-file-input" id="file" required>
+                            <label class="custom-file-label" for="file">Pilih file...</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><strong>Sumber Kertas:</strong></label>
+                        <div class="card p-2">
+                            <div class="custom-control custom-radio">
+                                <input type="radio" id="paper_from_us" name="paper_source" value="dari_kami" class="custom-control-input" checked>
+                                <label class="custom-control-label" for="paper_from_us">Kertas dari Kami (Rp 300/lbr)</label>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                <input type="radio" id="paper_from_user" name="paper_source" value="bawa_sendiri" class="custom-control-input">
+                                <label class="custom-control-label" for="paper_from_user">Bawa Kertas Sendiri (Rp 150/lbr)</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="copies"><strong>Jumlah Kopi:</strong></label>
+                            <input type="number" name="copies" id="copies" class="form-control" value="1" min="1" required>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label for="print_type"><strong>Jenis Cetak:</strong></label>
+                            <select name="print_type" id="print_type" class="form-control">
+                                <option value="grayscale">Hitam Putih</option>
+                                <option value="color">Berwarna</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="paper_size"><strong>Ukuran Kertas:</strong></label>
+                        <select name="paper_size" id="paper_size" class="form-control">
+                            <option value="A4">A4</option>
+                            <option value="F4">F4</option>
+                            <option value="Letter">Letter</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block mt-3">
+                        <i class="fas fa-plus-circle mr-2"></i>Tambah ke Antrian
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7 mb-4">
+        <div class="card shadow-sm h-100">
+             <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="fas fa-history mr-2"></i>Riwayat Terbaru</h4>
+                <a href="{{ url_for('main.history') }}" class="btn btn-sm btn-outline-primary">Lihat Semua</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Filename</th>
+                                <th>Status</th>
+                                <th>Detail</th>
+                                <th>Biaya</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in user_jobs %}
+                            <tr>
+                                <td class="align-middle">
+                                    <i class="far fa-file-pdf mr-2 text-danger"></i>
+                                    {{ job.filename | truncate(25) }}
+                                </td>
+                                <td class="align-middle">
+                                    <span class="badge status-{{ job.status }}">{{ job.status }}</span>
+                                </td>
+                                <td class="align-middle small">
+                                    {{ job.pages }} hlm &times; {{ job.copies }} kopi
+                                </td>
+                                <td class="align-middle">
+                                    Rp {{ "{:,.0f}".format(job.total_cost).replace(',', '.') }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Anda belum memiliki riwayat pekerjaan.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if user_jobs %}
+                        <tfoot>
+                            <tr class="table-info">
+                                <td colspan="3" class="text-right font-weight-bold">Total Biaya (Riwayat Terbaru)</td>
+                                <td class="font-weight-bold">Rp {{ "{:,.0f}".format(total_cost_recent).replace(',', '.') }}</td>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <p class="mb-1"><strong><i class="fab fa-whatsapp"></i> Konfirmasi Pembayaran & Informasi</strong></p>
+                <p class="mb-0">Setelah upload, harap hubungi nomor di bawah untuk proses pembayaran dan pengambilan.</p>
+                <h4 class="font-weight-bold my-2">0831-1148-1327</h4>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
