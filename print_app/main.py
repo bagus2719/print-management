@@ -1,6 +1,9 @@
 import os
 import PyPDF2
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import (
+    Blueprint, render_template, request, redirect, url_for, flash, current_app, 
+    send_from_directory, abort
+)
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from .models import PrintJob
@@ -18,7 +21,7 @@ def calculate_cost(pages, copies, print_type, paper_source):
         base_price_per_page = 300
     
     if print_type == 'color':
-        final_price_per_page = base_price_per_page
+        final_price_per_page = base_price_per_page * 2
     else:
         final_price_per_page = base_price_per_page
         
@@ -99,3 +102,33 @@ def history():
                            jobs=user_jobs,
                            total_cost_all=total_cost_all,
                            current_sort_by=sort_by)
+
+@bp.route('/view_pdf/<int:job_id>')
+@login_required
+def view_pdf(job_id):
+    job = PrintJob.query.get_or_404(job_id)
+    if not current_user.is_admin and job.user_id != current_user.id:
+        abort(403)
+    try:
+        return send_from_directory(
+            directory=current_app.config['UPLOAD_FOLDER'],
+            path=job.filename,
+            mimetype='application/pdf'
+        )
+    except FileNotFoundError:
+        abort(404)
+
+@bp.route('/download_pdf/<int:job_id>')
+@login_required
+def download_pdf(job_id):
+    job = PrintJob.query.get_or_404(job_id)
+    if not current_user.is_admin:
+        abort(403)
+    try:
+        return send_from_directory(
+            directory=current_app.config['UPLOAD_FOLDER'],
+            path=job.filename,
+            as_attachment=True
+        )
+    except FileNotFoundError:
+        abort(404)

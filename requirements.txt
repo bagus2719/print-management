@@ -3,4 +3,4 @@ Flask-SQLAlchemy
 Flask-Login
 Flask-Migrate
 PyPDF2
-Werkzeug
+gunicorn

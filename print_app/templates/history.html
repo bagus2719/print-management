@@ -26,6 +26,7 @@
                         <th>Waktu Upload</th>
                         <th>Status</th>
                         <th>Total Biaya</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,15 +44,40 @@
                         <td class="align-middle">
                             <span class="badge status-{{ job.status }}">{{ job.status }}</span>
                         </td>
-                        <td class="align-middle">Rp {{ "{:,.0f}".format(job.total_cost).replace(',', '.') }}</td>
+                        <td class="align-middle">Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}</td>
+                        <td class="align-middle">
+                            <a href="{{ url_for('main.view_pdf', job_id=job.id) }}" class="btn btn-sm btn-info" target="_blank" data-toggle="tooltip" title="Lihat Dokumen">
+                                <i class="fas fa-eye"></i> Lihat
+                            </a>
+                        </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">Anda belum memiliki riwayat pekerjaan.</td>
+                        <td colspan="6" class="text-center text-muted py-4">Anda belum memiliki riwayat pekerjaan.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
+                {% if jobs %}
+                <tfoot>
+                    <tr class="table-info">
+                        <td colspan="4" class="text-right font-weight-bold">Total Biaya Keseluruhan</td>
+                        <td colspan="2" class="font-weight-bold">Rp {{ "{:,.0f}".format(total_cost_all)|replace(',', '.') }}</td>
+                    </tr>
+                </tfoot>
+                {% endif %}
             </table>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <p class="mb-1"><strong><i class="fab fa-whatsapp"></i> Konfirmasi Pembayaran & Informasi</strong></p>
+                <p class="mb-0">Setelah upload, harap hubungi nomor di bawah untuk proses pembayaran dan pengambilan.</p>
+                <h4 class="font-weight-bold my-2">0831-1148-1327</h4>
+            </div>
         </div>
     </div>
 </div>

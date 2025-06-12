@@ -23,11 +23,11 @@
                         <div class="card p-2">
                             <div class="custom-control custom-radio">
                                 <input type="radio" id="paper_from_us" name="paper_source" value="dari_kami" class="custom-control-input" checked>
-                                <label class="custom-control-label" for="paper_from_us">Kertas dari Kami (Rp 300/lbr)</label>
+                                <label class="custom-control-label" for="paper_from_us">Kertas dari Kami (Rp 300/hlm)</label>
                             </div>
                             <div class="custom-control custom-radio">
                                 <input type="radio" id="paper_from_user" name="paper_source" value="bawa_sendiri" class="custom-control-input">
-                                <label class="custom-control-label" for="paper_from_user">Bawa Kertas Sendiri (Rp 150/lbr)</label>
+                                <label class="custom-control-label" for="paper_from_user">Bawa Kertas Sendiri (Rp 150/hlm)</label>
                             </div>
                         </div>
                     </div>
@@ -40,7 +40,7 @@
                             <label for="print_type"><strong>Jenis Cetak:</strong></label>
                             <select name="print_type" id="print_type" class="form-control">
                                 <option value="grayscale">Hitam Putih</option>
-                                <option value="color">Berwarna</option>
+                                <option value="color">Berwarna (2x Harga Dasar)</option>
                             </select>
                         </div>
                     </div>
@@ -81,8 +81,10 @@
                             {% for job in user_jobs %}
                             <tr>
                                 <td class="align-middle">
-                                    <i class="far fa-file-pdf mr-2 text-danger"></i>
-                                    {{ job.filename | truncate(25) }}
+                                    <a href="{{ url_for('main.view_pdf', job_id=job.id) }}" target="_blank" class="text-dark" data-toggle="tooltip" title="Lihat Dokumen">
+                                        <i class="far fa-file-pdf mr-2 text-danger"></i>
+                                        {{ job.filename | truncate(25) }}
+                                    </a>
                                 </td>
                                 <td class="align-middle">
                                     <span class="badge status-{{ job.status }}">{{ job.status }}</span>
@@ -91,7 +93,7 @@
                                     {{ job.pages }} hlm &times; {{ job.copies }} kopi
                                 </td>
                                 <td class="align-middle">
-                                    Rp {{ "{:,.0f}".format(job.total_cost).replace(',', '.') }}
+                                    Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}
                                 </td>
                             </tr>
                             {% else %}
@@ -104,7 +106,7 @@
                         <tfoot>
                             <tr class="table-info">
                                 <td colspan="3" class="text-right font-weight-bold">Total Biaya (Riwayat Terbaru)</td>
-                                <td class="font-weight-bold">Rp {{ "{:,.0f}".format(total_cost_recent).replace(',', '.') }}</td>
+                                <td class="font-weight-bold">Rp {{ "{:,.0f}".format(total_cost_recent)|replace(',', '.') }}</td>
                             </tr>
                         </tfoot>
                         {% endif %}

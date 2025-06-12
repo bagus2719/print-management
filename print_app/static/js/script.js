@@ -1,7 +1,4 @@
-// Menunggu seluruh konten halaman dimuat
 document.addEventListener('DOMContentLoaded', function() {
-
-    // 1. Script untuk menampilkan nama file pada input file custom
     const fileInput = document.querySelector('.custom-file-input');
     if (fileInput) {
         fileInput.addEventListener('change', function(e) {
@@ -11,13 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 2. Mengaktifkan Bootstrap Tooltips
-    const tooltips = document.querySelectorAll('[data-toggle="tooltip"]');
-    if (tooltips.length > 0 && typeof $ !== 'undefined' && $.fn.tooltip) {
+    if (typeof $ !== 'undefined' && $.fn.tooltip) {
         $('[data-toggle="tooltip"]').tooltip();
     }
 
-    // 3. Script untuk konfirmasi penghapusan
     const deleteForms = document.querySelectorAll('form[data-form-delete]');
     deleteForms.forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -28,4 +22,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    const printButtons = document.querySelectorAll('.btn-print');
+    printButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const pdfUrl = this.dataset.url;
+            const printFrame = document.createElement('iframe');
+            printFrame.style.position = 'absolute';
+            printFrame.style.width = '0';
+            printFrame.style.height = '0';
+            printFrame.style.border = '0';
+            printFrame.src = pdfUrl;
+            document.body.appendChild(printFrame);
+            printFrame.onload = function() {
+                try {
+                    printFrame.contentWindow.focus();
+                    printFrame.contentWindow.print();
+                } catch (e) {
+                    console.error("Gagal memanggil dialog print:", e);
+                    alert("Gagal membuka dialog print. Pastikan pop-up tidak diblokir.");
+                }
+                setTimeout(() => {
+                    document.body.removeChild(printFrame);
+                }, 2000);
+            };
+        });
+    });
 });
