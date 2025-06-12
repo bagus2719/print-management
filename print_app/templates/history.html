@@ -1,27 +1,29 @@
 {% extends 'base.html' %}
-
 {% block title %}Riwayat Pekerjaan{% endblock %}
-
 {% block content %}
 <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h3 class="mb-0"><i class="fas fa-history mr-2"></i>Riwayat Pekerjaan Lengkap</h3>
-        <form method="GET" action="{{ url_for('main.history') }}" class="form-inline">
-            <label for="sort_by" class="mr-2">Urutkan:</label>
-            <select name="sort_by" id="sort_by" class="form-control form-control-sm" onchange="this.form.submit()">
-                <option value="time_desc" {% if current_sort_by == 'time_desc' %}selected{% endif %}>Waktu (Terbaru)</option>
-                <option value="time_asc" {% if current_sort_by == 'time_asc' %}selected{% endif %}>Waktu (Terlama)</option>
-                <option value="cost_desc" {% if current_sort_by == 'cost_desc' %}selected{% endif %}>Biaya (Tertinggi)</option>
-                <option value="cost_asc" {% if current_sort_by == 'cost_asc' %}selected{% endif %}>Biaya (Terendah)</option>
-            </select>
-        </form>
+        <div>
+            <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-home mr-1"></i> Kembali ke Home</a>
+            <form method="GET" action="{{ url_for('main.history') }}" class="form-inline d-inline-block ml-2">
+                <label for="sort_by" class="mr-2">Urutkan:</label>
+                <select name="sort_by" id="sort_by" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="time_desc" {% if current_sort_by == 'time_desc' %}selected{% endif %}>Waktu (Terbaru)</option>
+                    <option value="time_asc" {% if current_sort_by == 'time_asc' %}selected{% endif %}>Waktu (Terlama)</option>
+                    <option value="cost_desc" {% if current_sort_by == 'cost_desc' %}selected{% endif %}>Biaya (Tertinggi)</option>
+                    <option value="cost_asc" {% if current_sort_by == 'cost_asc' %}selected{% endif %}>Biaya (Terendah)</option>
+                </select>
+            </form>
+        </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
+            <table class="table table-striped table-hover" id="history-table">
                 <thead class="thead-light">
                     <tr>
-                        <th>Filename</th>
+                        <th style="width: 20px;"><input type="checkbox" id="select-all-history"></th>
+                        <th>Nama File</th>
                         <th>Detail Cetak</th>
                         <th>Waktu Upload</th>
                         <th>Status</th>
@@ -31,37 +33,34 @@
                 </thead>
                 <tbody>
                     {% for job in jobs %}
-                    <tr>
-                        <td class="align-middle"><i class="far fa-file-pdf text-danger mr-2"></i>{{ job.filename }}</td>
+                    <tr data-cost="{{ job.total_cost }}">
+                        <td class="text-center align-middle"><input type="checkbox" class="job-checkbox-history"></td>
+                        <td class="align-middle"><i class="far fa-file-pdf text-danger mr-2"></i>{{ job.display_name }}</td>
                         <td class="align-middle small">
                             {{ job.pages }} hlm &times; {{ job.copies }} kopi<br>
-                            <span class="text-muted">{{ job.print_type }} / {{ job.paper_size }}</span><br>
-                            <strong>Kertas: 
-                                {% if job.paper_source == 'bawa_sendiri' %}Bawa Sendiri{% else %}Dari Kami{% endif %}
-                            </strong>
+                            <span class="text-muted">{{ job.paper_size }}</span><br>
+                            <strong>Kertas: {% if job.paper_source == 'bawa_sendiri' %}Bawa Sendiri{% else %}Dari Kami{% endif %}</strong>
                         </td>
                         <td class="align-middle">{{ job.upload_time.strftime('%d-%m-%Y %H:%M') }}</td>
-                        <td class="align-middle">
-                            <span class="badge status-{{ job.status }}">{{ job.status }}</span>
-                        </td>
+                        <td class="align-middle"><span class="badge status-{{ job.status }}">{{ job.status }}</span></td>
                         <td class="align-middle">Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}</td>
                         <td class="align-middle">
-                            <a href="{{ url_for('main.view_pdf', job_id=job.id) }}" class="btn btn-sm btn-info" target="_blank" data-toggle="tooltip" title="Lihat Dokumen">
-                                <i class="fas fa-eye"></i> Lihat
-                            </a>
+                            <a href="{{ url_for('main.view_pdf', job_id=job.id) }}" class="btn btn-sm btn-info" target="_blank" data-toggle="tooltip" title="Lihat Dokumen di Tab Baru"><i class="fas fa-eye"></i> Lihat</a>
                         </td>
                     </tr>
                     {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-4">Anda belum memiliki riwayat pekerjaan.</td>
-                    </tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">Anda belum memiliki riwayat pekerjaan.</td></tr>
                     {% endfor %}
                 </tbody>
                 {% if jobs %}
                 <tfoot>
+                    <tr class="table-warning" id="selected-total-row" style="display: none;">
+                        <td colspan="6" class="text-right font-weight-bold">Total Biaya Terpilih</td>
+                        <td class="font-weight-bold" id="selected-cost-display">Rp 0</td>
+                    </tr>
                     <tr class="table-info">
-                        <td colspan="4" class="text-right font-weight-bold">Total Biaya Keseluruhan</td>
-                        <td colspan="2" class="font-weight-bold">Rp {{ "{:,.0f}".format(total_cost_all)|replace(',', '.') }}</td>
+                        <td colspan="6" class="text-right font-weight-bold">Total Biaya Keseluruhan</td>
+                        <td class="font-weight-bold">Rp {{ "{:,.0f}".format(total_cost_all)|replace(',', '.') }}</td>
                     </tr>
                 </tfoot>
                 {% endif %}
@@ -69,18 +68,6 @@
         </div>
     </div>
 </div>
-
 <div class="row mt-4">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <p class="mb-1"><strong><i class="fas fa-money-check-alt"></i> Konfirmasi Pembayaran & Informasi</strong></p>
-                <p class="mb-2">Silakan hubungi kami via WhatsApp untuk konfirmasi pembayaran atau jika ada pertanyaan lebih lanjut.</p>
-                <a href="https://wa.me/6283111481327?text=Halo,%20saya%20ingin%20mengonfirmasi%20pembayaran%20untuk%20pekerjaan%20cetak%20saya." class="btn btn-success btn-lg" target="_blank">
-                    <i class="fab fa-whatsapp mr-2"></i>Hubungi via WhatsApp
-                </a>
-            </div>
-        </div>
     </div>
-</div>
 {% endblock %}

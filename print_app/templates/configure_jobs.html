@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Konfigurasi Pekerjaan Cetak{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm" id="config-page-data" 
+     data-price-kami="300" 
+     data-price-sendiri="150">
+    <div class="card-header">
+        <h3 class="mb-0"><i class="fas fa-cogs mr-2"></i>Konfigurasi Pekerjaan Anda</h3>
+    </div>
+    <div class="card-body">
+        <p>Anda telah mengupload <strong>{{ files|length }} file</strong>. Silakan atur jumlah kopi untuk setiap file dan pilih sumber kertas.</p>
+        
+        <form method="POST" action="{{ url_for('main.configure_jobs') }}">
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered" id="files-table">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Nama File</th>
+                            <th class="text-center">Jumlah Halaman</th>
+                            <th style="width: 150px;">Jumlah Kopi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in files %}
+                        <tr class="job-item" data-pages="{{ file.pages }}">
+                            <td class="align-middle">
+                                <i class="far fa-file-pdf mr-2 text-danger"></i>
+                                {{ file.display_name }}
+                            </td>
+                            <td class="text-center align-middle">{{ file.pages }}</td>
+                            <td><input type="number" name="copies_{{ loop.index0 }}" class="form-control text-center copy-input" value="1" min="1" required></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-group">
+                <label><strong>Pilih Sumber Kertas (Berlaku untuk semua file di atas):</strong></label>
+                <div class="card p-3">
+                    <div class="custom-control custom-radio mb-2">
+                        <input type="radio" id="paper_from_us" name="paper_source" value="dari_kami" class="custom-control-input paper-source-input" checked>
+                        <label class="custom-control-label" for="paper_from_us"><strong>Kertas dari Kami</strong> - Rp 300 per halaman</label>
+                    </div>
+                    <div class="custom-control custom-radio">
+                        <input type="radio" id="paper_from_user" name="paper_source" value="bawa_sendiri" class="custom-control-input paper-source-input">
+                        <label class="custom-control-label" for="paper_from_user"><strong>Bawa Kertas Sendiri</strong> - Rp 150 per halaman</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    Total Estimasi Biaya: <span id="total-cost-display" class="font-weight-bold text-success">Rp 0</span>
+                </h4>
+                <div>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Batal & Upload Ulang</a>
+                    <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-check-circle mr-2"></i>Kirim Semua Pekerjaan</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

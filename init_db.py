@@ -10,19 +10,12 @@ with app.app_context():
     db.create_all()
 
     print("Membuat user admin...")
-    admin = User(
-        username='admin',
-        email='admin@example.com',
-        is_admin=True
-    )
+    admin = User(username='admin', email='admin@example.com', is_admin=True)
     admin.set_password('admin123')
     db.session.add(admin)
 
     print("Membuat user biasa...")
-    user = User(
-        username='testuser',
-        email='test@example.com'
-    )
+    user = User(username='testuser', email='test@example.com')
     user.set_password('user123')
     db.session.add(user)
     

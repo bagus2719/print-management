@@ -1,8 +1,9 @@
 import os
 import PyPDF2
+import time
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash, current_app, 
-    send_from_directory, abort
+    send_from_directory, abort, session
 )
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -14,72 +15,95 @@ bp = Blueprint('main', __name__)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
-def calculate_cost(pages, copies, print_type, paper_source):
+def calculate_cost(pages, copies, paper_source):
     if paper_source == 'bawa_sendiri':
-        base_price_per_page = 150
+        price_per_page = 150
     else:
-        base_price_per_page = 300
-    
-    if print_type == 'color':
-        final_price_per_page = base_price_per_page * 2
-    else:
-        final_price_per_page = base_price_per_page
-        
-    return final_price_per_page * pages * copies
+        price_per_page = 300
+    return price_per_page * pages * copies
 
 @bp.route('/', methods=('GET', 'POST'))
 @login_required
 def index():
     if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('Tidak ada file yang dipilih', 'warning')
-            return redirect(request.url)
-        file = request.files['file']
-        if file.filename == '':
-            flash('Tidak ada file yang dipilih', 'warning')
-            return redirect(request.url)
+        uploaded_files = request.files.getlist('files')
         
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            try:
-                with open(filepath, 'rb') as f:
-                    reader = PyPDF2.PdfReader(f)
-                    num_pages = len(reader.pages)
-            except Exception as e:
-                flash(f'Error membaca file PDF: {e}', 'danger')
-                return redirect(request.url)
+        if not uploaded_files or uploaded_files[0].filename == '':
+            flash('Tidak ada file yang dipilih.', 'warning')
+            return redirect(request.url)
 
-            copies = int(request.form.get('copies', 1))
-            print_type = request.form.get('print_type', 'grayscale')
-            paper_size = request.form.get('paper_size', 'A4')
-            paper_source = request.form.get('paper_source', 'dari_kami')
-            cost = calculate_cost(num_pages, copies, print_type, paper_source)
-            new_job = PrintJob(
-                filename=filename,
-                filepath=filepath,
-                pages=num_pages,
-                copies=copies,
-                print_type=print_type,
-                paper_size=paper_size,
-                paper_source=paper_source,
-                total_cost=cost,
-                author=current_user
-            )
-            db.session.add(new_job)
-            db.session.commit()
-            flash('File berhasil diupload! Silakan lakukan konfirmasi pembayaran.', 'success')
-            return redirect(url_for('main.index'))
+        files_for_configuration = []
+        for file in uploaded_files:
+            if file and allowed_file(file.filename):
+                original_filename = secure_filename(file.filename)
+                
+                timestamp = int(time.time())
+                unique_filename = f"{timestamp}_{original_filename}"
+                filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
+                
+                file.save(filepath)
+                try:
+                    with open(filepath, 'rb') as f:
+                        reader = PyPDF2.PdfReader(f)
+                        num_pages = len(reader.pages)
+                    
+                    files_for_configuration.append({
+                        'filename': unique_filename,
+                        'display_name': original_filename,
+                        'filepath': filepath,
+                        'pages': num_pages
+                    })
+                except Exception as e:
+                    flash(f'Gagal memproses file "{original_filename}": {e}', 'danger')
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+            else:
+                flash(f'File "{file.filename}" memiliki format yang tidak didukung. Harap upload PDF.', 'warning')
+
+        if files_for_configuration:
+            session['files_to_configure'] = files_for_configuration
+            return redirect(url_for('main.configure_jobs'))
         else:
-            flash('Jenis file tidak diizinkan. Harap upload PDF.', 'danger')
+            flash('Tidak ada file PDF valid yang berhasil diupload.', 'danger')
+            return redirect(request.url)
 
     user_jobs = PrintJob.query.filter_by(user_id=current_user.id).order_by(PrintJob.upload_time.desc()).limit(5).all()
     total_cost_recent = sum(job.total_cost for job in user_jobs)
+    return render_template('index.html', user_jobs=user_jobs, total_cost_recent=total_cost_recent)
 
-    return render_template('index.html', 
-                           user_jobs=user_jobs,
-                           total_cost_recent=total_cost_recent)
+@bp.route('/configure', methods=['GET', 'POST'])
+@login_required
+def configure_jobs():
+    files = session.get('files_to_configure')
+    if not files:
+        flash('Tidak ada file untuk dikonfigurasi. Silakan upload terlebih dahulu.', 'warning')
+        return redirect(url_for('main.index'))
+
+    if request.method == 'POST':
+        paper_source = request.form.get('paper_source')
+        
+        for i, file_details in enumerate(files):
+            copies = int(request.form.get(f'copies_{i}', 1))
+            if copies > 0:
+                cost = calculate_cost(pages=file_details['pages'], copies=copies, paper_source=paper_source)
+                new_job = PrintJob(
+                    filename=file_details['filename'],
+                    display_name=file_details['display_name'],
+                    filepath=file_details['filepath'],
+                    pages=file_details['pages'],
+                    copies=copies,
+                    paper_source=paper_source,
+                    total_cost=cost,
+                    author=current_user
+                )
+                db.session.add(new_job)
+
+        db.session.commit()
+        session.pop('files_to_configure', None)
+        flash(f'{len(files)} pekerjaan berhasil ditambahkan ke antrian!', 'success')
+        return redirect(url_for('main.history'))
+
+    return render_template('configure_jobs.html', files=files)
 
 @bp.route('/history')
 @login_required

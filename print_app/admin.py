@@ -56,7 +56,7 @@ def update_status(job_id, new_status):
     if new_status in ['pending', 'printing', 'completed', 'failed']:
         job.status = new_status
         db.session.commit()
-        flash(f'Status pekerjaan "{job.filename}" berhasil diubah menjadi {new_status}.', 'success')
+        flash(f'Status pekerjaan "{job.display_name}" berhasil diubah menjadi {new_status}.', 'success')
     else:
         flash('Status tidak valid.', 'error')
     return redirect(request.referrer or url_for('admin.dashboard'))
@@ -68,5 +68,24 @@ def delete_job(job_id):
     job = PrintJob.query.get_or_404(job_id)
     db.session.delete(job)
     db.session.commit()
-    flash(f'Pekerjaan "{job.filename}" berhasil dihapus.', 'info')
+    flash(f'Pekerjaan "{job.display_name}" berhasil dihapus.', 'info')
+    return redirect(request.referrer or url_for('admin.dashboard'))
+
+@bp.route('/bulk_delete', methods=['POST'])
+@login_required
+@admin_required
+def bulk_delete():
+    job_ids = request.form.getlist('selected_jobs')
+    
+    if not job_ids:
+        flash('Tidak ada pekerjaan yang dipilih untuk dihapus.', 'warning')
+        return redirect(url_for('admin.dashboard'))
+    
+    jobs_to_delete = PrintJob.query.filter(PrintJob.id.in_(job_ids)).all()
+    for job in jobs_to_delete:
+        db.session.delete(job)
+            
+    db.session.commit()
+    
+    flash(f'{len(job_ids)} pekerjaan berhasil dihapus.', 'success')
     return redirect(request.referrer or url_for('admin.dashboard'))

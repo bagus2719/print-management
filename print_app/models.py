@@ -23,11 +23,12 @@ def load_user(id):
 
 class PrintJob(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(255), nullable=False)
+    filename = db.Column(db.String(255), nullable=False, unique=True)
+    display_name = db.Column(db.String(255), nullable=False)
     filepath = db.Column(db.String(512), nullable=False)
     pages = db.Column(db.Integer, nullable=False)
     copies = db.Column(db.Integer, default=1)
-    print_type = db.Column(db.String(50), default='grayscale')
+    print_type = db.Column(db.String(50), default='-')
     paper_size = db.Column(db.String(50), default='A4')
     paper_source = db.Column(db.String(50), default='dari_kami', nullable=False)
     total_cost = db.Column(db.Float, default=0.0)
