@@ -1,0 +1,155 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Pembayaran{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="clay-card overflow-hidden animate-slide-up">
+        <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-8 py-6">
+            <h3 class="text-2xl font-black text-white flex items-center gap-4">
+                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <i class="fas fa-credit-card text-white text-xl"></i>
+                </div>
+                Pembayaran
+            </h3>
+        </div>
+        <div class="p-8">
+            <!-- Job Summary -->
+            <div class="clay-card-inset p-5 mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-base font-bold text-gray-700"><i class="far fa-file-pdf text-red-400 mr-2 text-lg"></i>{{ job.display_name }}</p>
+                        <p class="text-sm text-gray-400 mt-1">{{ job.pages }} halaman × {{ job.copies }} kopi</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-400">Total Biaya</p>
+                        <p class="text-2xl font-black text-emerald-600">Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('main.payment', job_id=job.id) }}" enctype="multipart/form-data" class="space-y-7">
+                <!-- Payment Method -->
+                <div>
+                    <label class="block text-base font-black text-gray-700 mb-4"><i class="fas fa-wallet mr-2 text-indigo-500"></i>Pilih Metode Pembayaran</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-{% if accounts|length > 3 %}4{% else %}{{ accounts|length }}{% endif %} gap-4">
+                        {% for acc in accounts %}
+                        <label class="clay-card p-5 cursor-pointer hover:ring-2 hover:ring-indigo-400 transition relative payment-option" data-method="{{ acc.method }}" data-number="{{ acc.account_number }}" data-name="{{ acc.account_name }}" data-label="{{ acc.label }}" data-qr="{{ acc.qr_filename if acc.qr_filename else '' }}">
+                            <input type="radio" name="payment_method" value="{{ acc.method }}" class="sr-only" required>
+                            <div class="text-center">
+                                <div class="w-16 h-12 mx-auto bg-white rounded-xl flex items-center justify-center mb-3 shadow-sm p-2 border border-gray-100">
+                                    {% if acc.method == 'bca' %}<img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg" class="max-h-full max-w-full" alt="BCA">
+                                    {% elif acc.method == 'bni' %}<img src="https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg" class="max-h-full max-w-full" alt="BNI">
+                                    {% elif acc.method == 'bri' %}<img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/BRI_2020.svg" class="max-h-full max-w-full" alt="BRI">
+                                    {% elif acc.method == 'mandiri' %}<img src="https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg" class="max-h-full max-w-full" alt="Mandiri">
+                                    {% elif acc.method == 'dana' %}<img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" class="max-h-full max-w-full" alt="DANA">
+                                    {% elif acc.method == 'shopeepay' %}<img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee_Pay_logo.svg" class="max-h-full max-w-full" alt="ShopeePay">
+                                    {% elif acc.method == 'gopay' %}<img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg" class="max-h-full max-w-full" alt="GoPay">
+                                    {% elif acc.method == 'ovo' %}<img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg" class="max-h-full max-w-full" alt="OVO">
+                                    {% elif acc.method == 'qris' %}<img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" class="max-h-full max-w-full" alt="QRIS">
+                                    {% else %}<span class="text-lg font-black text-gray-500">{{ acc.label[:4]|upper }}</span>{% endif %}
+                                </div>
+                                <p class="text-sm font-bold text-gray-700">{{ acc.label }}</p>
+                            </div>
+                            <div class="hidden check-mark absolute top-2 right-2">
+                                <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center shadow-md"><i class="fas fa-check text-white text-sm"></i></div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Payment Info -->
+                <div class="clay-card-inset p-6 hidden" id="payment-info">
+                    <p class="text-sm font-black text-gray-500 uppercase tracking-wider mb-2">Transfer ke Rekening / Akun Berikut</p>
+                    <p class="text-base font-bold text-gray-800" id="info-label"></p>
+                    
+                    <div id="text-info-container">
+                        <p class="text-2xl font-black text-indigo-600 mt-1 tracking-wider" id="info-number"></p>
+                        <p class="text-base text-gray-500" id="info-name"></p>
+                    </div>
+                    
+                    <div id="qr-info-container" class="hidden mt-4 text-center">
+                        <img id="qr-image" src="" alt="QR Code" class="mx-auto rounded-2xl shadow-lg border-4 border-white max-w-[200px]">
+                        <p class="text-sm text-gray-500 mt-2">Silakan scan Barcode QRIS di atas</p>
+                    </div>
+                </div>
+
+                <!-- Account Name -->
+                <div>
+                    <label for="account_name" class="block text-base font-bold text-gray-700 mb-2">Nama Pengirim</label>
+                    <input id="account_name" name="account_name" type="text" required class="clay-input w-full px-5 py-3.5 text-base" placeholder="Nama di rekening/e-wallet Anda">
+                </div>
+
+                <!-- Proof Upload -->
+                <div>
+                    <label class="block text-base font-bold text-gray-700 mb-2"><i class="fas fa-camera mr-2 text-indigo-500"></i>Bukti Transfer (Screenshot)</label>
+                    <div class="clay-card-inset p-6 text-center cursor-pointer hover:bg-indigo-50/30 transition group relative" id="proof-drop-zone">
+                        <input type="file" name="proof_file" id="proof_file" accept="image/*" required class="sr-only">
+                        <div id="proof-placeholder">
+                            <div class="w-16 h-16 mx-auto bg-gradient-to-tr from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                                <i class="fas fa-image text-3xl text-indigo-500"></i>
+                            </div>
+                            <p class="text-base font-bold text-gray-600">Klik untuk upload bukti transfer</p>
+                            <p class="text-sm text-gray-400 mt-1">PNG, JPG, JPEG, WEBP</p>
+                        </div>
+                        <div id="proof-preview" class="hidden">
+                            <img id="proof-img" src="" alt="Preview" class="max-h-48 mx-auto rounded-xl shadow-lg">
+                            <p class="text-sm font-bold text-emerald-600 mt-3"><i class="fas fa-check-circle mr-1"></i> Gambar terpilih</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 pt-3">
+                    <a href="{{ url_for('main.history') }}" class="clay-btn px-6 py-3.5 text-base font-bold text-gray-600 bg-gray-100 flex-1 text-center">Batal</a>
+                    <button type="submit" class="clay-btn px-6 py-3.5 text-base font-black text-white bg-gradient-to-r from-emerald-500 to-teal-500 flex-1">
+                        <i class="fas fa-paper-plane mr-2"></i> Kirim Pembayaran
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('.payment-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+        document.querySelectorAll('.payment-option').forEach(o => {
+            o.classList.remove('ring-2','ring-indigo-400');
+            o.querySelector('.check-mark').classList.add('hidden');
+        });
+        opt.classList.add('ring-2','ring-indigo-400');
+        opt.querySelector('.check-mark').classList.remove('hidden');
+        
+        document.getElementById('payment-info').classList.remove('hidden');
+        document.getElementById('info-label').textContent = opt.dataset.label;
+        
+        const method = opt.dataset.method;
+        if(method === 'qris' && opt.dataset.qr) {
+            document.getElementById('text-info-container').classList.add('hidden');
+            document.getElementById('qr-info-container').classList.remove('hidden');
+            document.getElementById('qr-image').src = `/qris_image/${opt.dataset.qr}`;
+        } else {
+            document.getElementById('text-info-container').classList.remove('hidden');
+            document.getElementById('qr-info-container').classList.add('hidden');
+            document.getElementById('info-number').textContent = opt.dataset.number;
+            document.getElementById('info-name').textContent = 'a.n. ' + opt.dataset.name;
+        }
+    });
+});
+const dropZone = document.getElementById('proof-drop-zone');
+const fileInput = document.getElementById('proof_file');
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            document.getElementById('proof-img').src = ev.target.result;
+            document.getElementById('proof-placeholder').classList.add('hidden');
+            document.getElementById('proof-preview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

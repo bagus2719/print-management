@@ -1,0 +1,107 @@
+{% extends 'layouts/admin.html' %}
+{% block title %}Kelola Pekerjaan{% endblock %}
+{% block header %}<i class="fas fa-print text-indigo-500 mr-2"></i> Pekerjaan Cetak{% endblock %}
+{% block content %}
+<form id="bulk-action-form" action="{{ url_for('admin.bulk_delete') }}" method="post"></form>
+
+<div class="clay-card-admin overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+            <p class="text-sm text-gray-500">Total: <span class="font-black text-indigo-600">Rp {{ "{:,.0f}".format(total_cost_filtered)|replace(',', '.') }}</span></p>
+            <div id="admin-selected-total-row" class="hidden text-xs text-gray-400 mt-1">Terpilih: <span class="font-bold text-emerald-600" id="admin-selected-cost-display">Rp 0</span></div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <button type="submit" form="bulk-action-form" id="bulk-delete-btn" disabled class="px-3 py-2 rounded-xl text-xs font-bold text-white bg-red-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-red-600 transition shadow-sm">
+                <i class="fas fa-trash-alt mr-1"></i> Hapus Terpilih
+            </button>
+            <form action="{{ url_for('admin.manage_jobs') }}" method="get" class="flex gap-2">
+                <select name="status" class="text-xs rounded-xl border-gray-200 py-2 px-3 focus:ring-indigo-500 shadow-sm" onchange="this.form.submit()">
+                    <option value="">Semua Status</option>
+                    <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="printing" {% if current_status == 'printing' %}selected{% endif %}>Printing</option>
+                    <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="failed" {% if current_status == 'failed' %}selected{% endif %}>Failed</option>
+                </select>
+            </form>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead class="bg-gray-800 text-white"><tr>
+                <th class="px-4 py-3 w-10"><input type="checkbox" id="select-all-admin" class="rounded text-indigo-500"></th>
+                <th class="px-4 py-3 text-left text-xs font-bold uppercase">ID</th>
+                <th class="px-4 py-3 text-left text-xs font-bold uppercase">User</th>
+                <th class="px-4 py-3 text-left text-xs font-bold uppercase">File</th>
+                <th class="px-4 py-3 text-left text-xs font-bold uppercase">Detail</th>
+                <th class="px-4 py-3 text-center text-xs font-bold uppercase">Status</th>
+                <th class="px-4 py-3 text-center text-xs font-bold uppercase w-48">Aksi</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for job in jobs %}
+                <tr class="hover:bg-gray-50 transition" data-cost="{{ job.total_cost }}">
+                    <td class="px-4 py-3 text-center"><input type="checkbox" name="selected_jobs" value="{{ job.id }}" form="bulk-action-form" class="job-checkbox-admin rounded text-indigo-500"></td>
+                    <td class="px-4 py-3 text-sm text-gray-400 font-mono">#{{ job.id }}</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-gray-700">{{ job.author.username }}</td>
+                    <td class="px-4 py-3"><span class="text-sm text-gray-700 truncate block max-w-[150px]" title="{{ job.display_name }}"><i class="far fa-file-pdf text-red-400 mr-1"></i>{{ job.display_name|truncate(18) }}</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500">
+                        {{ job.pages }}hlm × {{ job.copies }}kopi<br>
+                        <span class="{% if job.paper_source == 'bawa_sendiri' %}text-emerald-600{% else %}text-indigo-600{% endif %} font-semibold">
+                            {% if job.paper_source == 'bawa_sendiri' %}Sendiri{% else %}Kami{% endif %}
+                        </span> • Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        {% set sc = {'pending':'amber','printing':'blue','completed':'green','failed':'red'} %}
+                        <span class="px-2 py-1 rounded-lg text-[10px] font-bold uppercase bg-{{ sc.get(job.status,'gray') }}-100 text-{{ sc.get(job.status,'gray') }}-700">{{ job.status }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center space-y-1">
+                        <div class="flex justify-center gap-1">
+                            <a href="{{ url_for('main.view_pdf', job_id=job.id) }}" target="_blank" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition" title="Lihat"><i class="fas fa-eye text-xs text-gray-600"></i></a>
+                            <a href="{{ url_for('main.download_pdf', job_id=job.id) }}" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition" title="Download"><i class="fas fa-download text-xs text-gray-600"></i></a>
+                        </div>
+                        <div class="flex justify-center gap-1">
+                            <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='printing') }}" method="post" class="inline">
+                                <button type="submit" class="w-7 h-7 rounded-lg bg-blue-100 hover:bg-blue-200 flex items-center justify-center transition disabled:opacity-30" title="Proses" {% if job.status != 'pending' %}disabled{% endif %}><i class="fas fa-sync-alt text-xs text-blue-600"></i></button>
+                            </form>
+                            <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='completed') }}" method="post" class="inline">
+                                <button type="submit" class="w-7 h-7 rounded-lg bg-green-100 hover:bg-green-200 flex items-center justify-center transition disabled:opacity-30" title="Selesai" {% if job.status != 'printing' %}disabled{% endif %}><i class="fas fa-check text-xs text-green-600"></i></button>
+                            </form>
+                            <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='failed') }}" method="post" class="inline">
+                                <button type="submit" class="w-7 h-7 rounded-lg bg-amber-100 hover:bg-amber-200 flex items-center justify-center transition disabled:opacity-30" title="Gagal" {% if job.status != 'printing' %}disabled{% endif %}><i class="fas fa-times text-xs text-amber-600"></i></button>
+                            </form>
+                            <form action="{{ url_for('admin.delete_job', job_id=job.id) }}" method="post" class="inline form-delete">
+                                <button type="submit" class="w-7 h-7 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center transition" title="Hapus"><i class="fas fa-trash text-xs text-red-600"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400"><i class="fas fa-inbox text-3xl text-gray-200 block mb-2"></i>Tidak ada data.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fmt = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);
+    const sa = document.getElementById('select-all-admin');
+    const cbs = document.querySelectorAll('.job-checkbox-admin');
+    const btn = document.getElementById('bulk-delete-btn');
+    const row = document.getElementById('admin-selected-total-row');
+    const disp = document.getElementById('admin-selected-cost-display');
+    const form = document.getElementById('bulk-action-form');
+    function update() {
+        let cost=0, cnt=0;
+        cbs.forEach(c => { if(c.checked){cost+=parseFloat(c.closest('tr').dataset.cost);cnt++;}});
+        btn.disabled = cnt===0;
+        if(cnt>0){disp.textContent=fmt(cost);row.classList.remove('hidden');}else{row.classList.add('hidden');}
+    }
+    if(sa) sa.addEventListener('change',()=>{cbs.forEach(c=>c.checked=sa.checked);update();});
+    cbs.forEach(c=>c.addEventListener('change',update));
+    if(form) form.addEventListener('submit',e=>{if(!confirm('Hapus pekerjaan terpilih?'))e.preventDefault();});
+    document.querySelectorAll('.form-delete').forEach(f=>f.addEventListener('submit',e=>{if(!confirm('Hapus pekerjaan ini?'))e.preventDefault();}));
+});
+</script>
+{% endblock %}

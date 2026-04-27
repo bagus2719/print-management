@@ -7,12 +7,25 @@ __pycache__/
 venv/
 .venv/
 
-# Instance Folder (berisi database dan file rahasia)
+# Instance Folder (database)
 instance/
 
-# Uploads (jika Anda tidak ingin file upload masuk ke repo)
-print_app/uploads/
+# Uploads (user-generated files)
+uploads/
 
-# IDE/Editor specific
+# Environment / Secrets
+.env
+*.env
+
+# IDE / Editor
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flask
+*.db

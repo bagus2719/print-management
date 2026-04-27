@@ -1,0 +1,112 @@
+{% extends 'layouts/admin.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block header %}<i class="fas fa-chart-pie text-indigo-500 mr-2"></i> Dashboard Overview{% endblock %}
+{% block content %}
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    <div class="clay-card-admin p-6 hover:shadow-xl transition-all duration-300 group cursor-pointer">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">Total Pekerjaan</p>
+                <p class="text-4xl font-black text-gray-800 mt-2">{{ total_jobs }}</p>
+            </div>
+            <div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                <i class="fas fa-print text-indigo-500 text-2xl"></i>
+            </div>
+        </div>
+        <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-600 rounded-full" style="width: 100%"></div></div>
+    </div>
+    <div class="clay-card-admin p-6 hover:shadow-xl transition-all duration-300 group cursor-pointer">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">Total User</p>
+                <p class="text-4xl font-black text-gray-800 mt-2">{{ total_users }}</p>
+            </div>
+            <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                <i class="fas fa-users text-emerald-500 text-2xl"></i>
+            </div>
+        </div>
+        <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full" style="width: 100%"></div></div>
+    </div>
+    <div class="clay-card-admin p-6 hover:shadow-xl transition-all duration-300 group cursor-pointer">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">Menunggu</p>
+                <p class="text-4xl font-black text-amber-600 mt-2">{{ pending_jobs }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ pending_payments }} pembayaran pending</p>
+            </div>
+            <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                <i class="fas fa-clock text-amber-500 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="clay-card-admin p-6 hover:shadow-xl transition-all duration-300 group cursor-pointer">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">Pendapatan</p>
+                <p class="text-3xl font-black text-green-600 mt-2">Rp {{ "{:,.0f}".format(total_revenue)|replace(',', '.') }}</p>
+            </div>
+            <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                <i class="fas fa-wallet text-green-500 text-2xl"></i>
+            </div>
+        </div>
+        <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full" style="width: 100%"></div></div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Recent Jobs -->
+    <div class="clay-card-admin overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-base font-black text-gray-800"><i class="fas fa-print text-indigo-500 mr-2"></i>Pekerjaan Terbaru</h3>
+            <a href="{{ url_for('admin.manage_jobs') }}" class="text-sm font-bold text-indigo-600 hover:text-indigo-500 transition">Lihat Semua →</a>
+        </div>
+        <div class="divide-y divide-gray-50">
+            {% for job in recent_jobs %}
+            <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition">
+                <div class="flex items-center gap-4 min-w-0">
+                    <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="far fa-file-pdf text-red-400 text-lg"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-base font-bold text-gray-700 truncate">{{ job.display_name|truncate(25) }}</p>
+                        <p class="text-sm text-gray-400">{{ job.author.username }} • {{ job.upload_time.strftime('%d/%m %H:%M') }}</p>
+                    </div>
+                </div>
+                {% set sc = {'pending':'amber','printing':'blue','completed':'green','failed':'red'} %}
+                <span class="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-{{ sc.get(job.status,'gray') }}-100 text-{{ sc.get(job.status,'gray') }}-700">{{ job.status }}</span>
+            </div>
+            {% else %}
+            <div class="px-6 py-10 text-center text-base text-gray-400">Belum ada data.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="clay-card-admin overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-base font-black text-gray-800"><i class="fas fa-credit-card text-emerald-500 mr-2"></i>Pembayaran Terbaru</h3>
+            <a href="{{ url_for('admin.manage_payments') }}" class="text-sm font-bold text-emerald-600 hover:text-emerald-500 transition">Lihat Semua →</a>
+        </div>
+        <div class="divide-y divide-gray-50">
+            {% for p in recent_payments %}
+            <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-money-bill-wave text-emerald-400 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-base font-bold text-gray-700">{{ p.payer.username }} - {{ p.method|upper }}</p>
+                        <p class="text-sm text-gray-400">Rp {{ "{:,.0f}".format(p.amount)|replace(',', '.') }}</p>
+                    </div>
+                </div>
+                {% set pc = {'pending':'amber','confirmed':'green','rejected':'red'} %}
+                <span class="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-{{ pc.get(p.status,'gray') }}-100 text-{{ pc.get(p.status,'gray') }}-700">{{ p.status }}</span>
+            </div>
+            {% else %}
+            <div class="px-6 py-10 text-center text-base text-gray-400">Belum ada pembayaran.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

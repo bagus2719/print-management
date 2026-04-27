@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %} - PrintManager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: { dark: '#1a1d2e' },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s cubic-bezier(.4,0,.2,1)',
+                        'slide-right': 'slideRight 0.3s cubic-bezier(.4,0,.2,1)',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideRight: { '0%': { opacity: '0', transform: 'translateX(-20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sidebar-item { transition: all 0.25s cubic-bezier(.4,0,.2,1); border-radius: 14px; }
+        .sidebar-item:hover { background: rgba(99,102,241,0.15); transform: translateX(6px); }
+        .sidebar-item.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 6px 16px rgba(99,102,241,0.4); }
+        .sidebar-item.active i { color: white; }
+        .clay-card-admin {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased h-screen flex overflow-hidden text-base">
+    
+    <!-- Sidebar -->
+    <aside class="bg-dark text-white w-80 flex-shrink-0 hidden md:flex flex-col" id="sidebar">
+        <div class="h-24 flex items-center px-7 border-b border-white/10">
+            <a href="{{ url_for('main.index') }}" class="flex items-center gap-4 group">
+                <div class="w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                    <i class="fas fa-print text-white text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-black text-white">AdminPanel</span>
+                    <p class="text-xs text-gray-400 -mt-0.5">Print Management</p>
+                </div>
+            </a>
+        </div>
+        <div class="flex-1 overflow-y-auto py-7 px-5">
+            <p class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 px-3">Menu Utama</p>
+            <nav class="space-y-2">
+                {% set current_page = request.endpoint %}
+                <a href="{{ url_for('admin.dashboard') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold gap-4 {% if current_page == 'admin.dashboard' %}active{% else %}text-gray-300{% endif %}">
+                    <i class="fas fa-chart-pie w-6 text-center text-lg {% if current_page != 'admin.dashboard' %}text-gray-500{% endif %}"></i> Dashboard
+                </a>
+                <a href="{{ url_for('admin.manage_jobs') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold gap-4 {% if current_page == 'admin.manage_jobs' %}active{% else %}text-gray-300{% endif %}">
+                    <i class="fas fa-print w-6 text-center text-lg {% if current_page != 'admin.manage_jobs' %}text-gray-500{% endif %}"></i> Pekerjaan Cetak
+                </a>
+                <a href="{{ url_for('admin.manage_users') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold gap-4 {% if current_page == 'admin.manage_users' %}active{% else %}text-gray-300{% endif %}">
+                    <i class="fas fa-users w-6 text-center text-lg {% if current_page != 'admin.manage_users' %}text-gray-500{% endif %}"></i> Kelola User
+                </a>
+                <a href="{{ url_for('admin.manage_payments') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold gap-4 {% if current_page == 'admin.manage_payments' %}active{% else %}text-gray-300{% endif %}">
+                    <i class="fas fa-credit-card w-6 text-center text-lg {% if current_page != 'admin.manage_payments' %}text-gray-500{% endif %}"></i> Pembayaran
+                </a>
+                <a href="{{ url_for('admin.manage_payment_accounts') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold gap-4 {% if current_page == 'admin.manage_payment_accounts' %}active{% else %}text-gray-300{% endif %}">
+                    <i class="fas fa-university w-6 text-center text-lg {% if current_page != 'admin.manage_payment_accounts' %}text-gray-500{% endif %}"></i> Akun Pembayaran
+                </a>
+            </nav>
+            <p class="text-xs font-black text-gray-500 uppercase tracking-widest mt-10 mb-4 px-3">Lainnya</p>
+            <nav class="space-y-2">
+                <a href="{{ url_for('main.index') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4">
+                    <i class="fas fa-arrow-left w-6 text-center text-lg text-gray-500"></i> Kembali ke Web
+                </a>
+            </nav>
+        </div>
+        <div class="p-5 border-t border-white/10">
+            <div class="flex items-center gap-4 px-3">
+                <div class="w-11 h-11 bg-gradient-to-tr from-indigo-400 to-purple-400 rounded-xl flex items-center justify-center text-base font-black text-white">
+                    {{ current_user.username[0]|upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-base font-bold text-white truncate">{{ current_user.username }}</p>
+                    <a href="{{ url_for('auth.logout') }}" class="text-sm text-gray-400 hover:text-red-400 transition">Logout</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white/80 backdrop-blur-xl shadow-sm h-20 flex items-center justify-between px-5 sm:px-8 lg:px-10 z-10 border-b border-gray-100">
+            <div class="flex items-center gap-5">
+                <button type="button" id="sidebar-toggle" class="text-gray-500 focus:outline-none md:hidden hover:text-gray-700 p-3 rounded-xl hover:bg-gray-100 transition">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+                <h1 class="text-xl font-black text-gray-800">{% block header %}Dashboard{% endblock %}</h1>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto bg-gray-50/50 p-5 sm:p-7 lg:p-10 animate-fade-in">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% set colors = {'success': 'green', 'danger': 'red', 'error': 'red', 'warning': 'amber', 'info': 'blue'} %}
+                        {% set c = colors.get(category, 'blue') %}
+                        <div class="clay-card-admin mb-5 p-5 flex justify-between items-center border-l-4 border-{{ c }}-400 animate-slide-right">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-{{ c }}-100 flex items-center justify-center flex-shrink-0">
+                                    {% if category == 'success' %}<i class="fas fa-check text-green-600 text-lg"></i>
+                                    {% elif category in ['danger','error'] %}<i class="fas fa-exclamation text-red-600 text-lg"></i>
+                                    {% elif category == 'warning' %}<i class="fas fa-exclamation-triangle text-amber-600 text-lg"></i>
+                                    {% else %}<i class="fas fa-info text-blue-600 text-lg"></i>{% endif %}
+                                </div>
+                                <span class="text-base font-semibold text-gray-700">{{ message }}</span>
+                            </div>
+                            <button onclick="this.closest('.clay-card-admin').remove()" class="text-gray-400 hover:text-gray-600 transition ml-4 p-2"><i class="fas fa-times text-lg"></i></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 hidden md:hidden"></div>
+    <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 bg-dark w-80 shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 md:hidden flex flex-col">
+        <div class="h-20 flex items-center justify-between px-5 border-b border-white/10">
+            <span class="text-xl font-black text-white flex items-center gap-3"><i class="fas fa-print text-indigo-400 text-xl"></i> Admin</span>
+            <button id="close-mobile-sidebar" class="text-gray-400 hover:text-white p-3"><i class="fas fa-times text-2xl"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto py-5 px-4">
+            <nav class="space-y-2">
+                <a href="{{ url_for('admin.dashboard') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-chart-pie w-6 text-center text-lg text-gray-500"></i> Dashboard</a>
+                <a href="{{ url_for('admin.manage_jobs') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-print w-6 text-center text-lg text-gray-500"></i> Pekerjaan</a>
+                <a href="{{ url_for('admin.manage_users') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-users w-6 text-center text-lg text-gray-500"></i> Users</a>
+                <a href="{{ url_for('admin.manage_payments') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-credit-card w-6 text-center text-lg text-gray-500"></i> Pembayaran</a>
+                <a href="{{ url_for('admin.manage_payment_accounts') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-university w-6 text-center text-lg text-gray-500"></i> Akun Bayar</a>
+                <a href="{{ url_for('main.index') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-arrow-left w-6 text-center text-lg text-gray-500"></i> Kembali</a>
+            </nav>
+        </div>
+    </aside>
+
+    <script>
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const overlay = document.getElementById('sidebar-overlay');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const closeBtn = document.getElementById('close-mobile-sidebar');
+        function openSidebar() { mobileSidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+        function closeSidebar() { mobileSidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
+        if(toggleBtn) toggleBtn.addEventListener('click', openSidebar);
+        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

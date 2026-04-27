@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Print Management{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s cubic-bezier(.4,0,.2,1)',
+                        'slide-up': 'slideUp 0.6s cubic-bezier(.4,0,.2,1)',
+                        'bounce-soft': 'bounceSoft 2s ease-in-out infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        bounceSoft: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+                        wiggle: { '0%, 100%': { transform: 'rotate(-3deg)' }, '50%': { transform: 'rotate(3deg)' } },
+                    }
+                }
+            }
+        }
+        
+        // Dark Mode Logic
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <style>
+        .clay-card {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.1), -10px -10px 20px rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .dark .clay-card {
+            background: #1e293b;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.3), -10px -10px 20px rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            color: #f1f5f9;
+        }
+        
+        .clay-card-inset {
+            background: #f1f5f9;
+            border-radius: 18px;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.05), inset -3px -3px 6px rgba(255,255,255,0.5);
+        }
+        .dark .clay-card-inset {
+            background: #0f172a;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3), inset -3px -3px 6px rgba(255,255,255,0.05);
+            color: #f1f5f9;
+        }
+
+        .clay-btn {
+            border-radius: 16px;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.1), -4px -4px 10px rgba(255,255,255,0.1);
+            transition: all 0.25s cubic-bezier(.4,0,.2,1);
+        }
+        .dark .clay-btn {
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.3), -4px -4px 10px rgba(255,255,255,0.02);
+        }
+        .clay-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 6px 6px 14px rgba(0,0,0,0.15), -6px -6px 14px rgba(255,255,255,0.1);
+        }
+        .dark .clay-btn:hover {
+            box-shadow: 6px 6px 14px rgba(0,0,0,0.4), -6px -6px 14px rgba(255,255,255,0.05);
+        }
+        .clay-btn:active {
+            transform: translateY(0);
+        }
+
+        .clay-input {
+            background: #f1f5f9;
+            border-radius: 14px;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.05), inset -3px -3px 6px rgba(255,255,255,0.5);
+            border: none;
+            transition: all 0.3s;
+        }
+        .dark .clay-input {
+            background: #0f172a;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3), inset -3px -3px 6px rgba(255,255,255,0.05);
+            color: white;
+        }
+        .clay-input:focus {
+            outline: 2px solid rgba(30,64,175,0.5);
+        }
+
+        .micro-hover { transition: all 0.3s cubic-bezier(.4,0,.2,1); }
+        .micro-hover:hover { transform: translateY(-5px) scale(1.01); }
+
+        /* Navbar link styles */
+        .nav-link {
+            position: relative;
+            padding: 8px 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #64748b;
+            transition: all 0.25s cubic-bezier(.4,0,.2,1);
+        }
+        .dark .nav-link { color: #94a3b8; }
+        .nav-link:hover {
+            color: #1e40af;
+            background: rgba(30,64,175,0.08);
+        }
+        .dark .nav-link:hover { color: #93c5fd; background: rgba(59,130,246,0.15); }
+        .nav-link.active {
+            color: #1e40af;
+            background: rgba(30,64,175,0.1);
+        }
+        .dark .nav-link.active { color: #93c5fd; background: rgba(59,130,246,0.15); }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background: linear-gradient(90deg, #1e40af, #2563eb);
+            border-radius: 10px;
+        }
+
+        /* Adjust global text colors in dark mode inside cards */
+        .dark .text-gray-800 { color: #f8fafc; }
+        .dark .text-gray-700 { color: #f1f5f9; }
+        .dark .text-gray-600 { color: #cbd5e1; }
+        .dark .text-gray-500 { color: #94a3b8; }
+        .dark .text-gray-400 { color: #64748b; }
+        .dark .bg-gray-50 { background-color: #1e293b; }
+        .dark .bg-gray-100 { background-color: #334155; }
+        .dark .border-gray-100 { border-color: #334155; }
+        
+        .dark table thead th { color: #94a3b8; }
+    </style>
+</head>
+<!-- Light mode uses white/slate-50, dark mode uses very dark slate/gray -->
+<body class="bg-slate-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 font-sans antialiased min-h-screen flex flex-col text-base transition-colors duration-300">
+    <!-- Navbar -->
+    <nav class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl sticky top-0 z-50 border-b border-gray-200/60 dark:border-slate-800 shadow-sm transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20">
+                <div class="flex items-center">
+                    <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 group">
+                        <div class="w-11 h-11 bg-gradient-to-tr from-blue-800 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                            <i class="fas fa-print text-white text-lg"></i>
+                        </div>
+                        <span class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-800 to-blue-600 dark:from-blue-400 dark:to-indigo-400">PrintManager</span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center sm:hidden gap-2">
+                    <button id="theme-toggle-mobile" class="p-3 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition">
+                        <i id="theme-toggle-dark-icon-mobile" class="fas fa-moon hidden text-xl"></i>
+                        <i id="theme-toggle-light-icon-mobile" class="fas fa-sun hidden text-xl"></i>
+                    </button>
+                    <button type="button" id="mobile-menu-btn" class="p-3 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+
+                {% set current_page = request.endpoint %}
+                <div class="hidden sm:flex sm:items-center sm:gap-1">
+                    <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none rounded-xl text-sm p-2.5 mr-2 transition">
+                        <i id="theme-toggle-dark-icon" class="fas fa-moon hidden text-lg"></i>
+                        <i id="theme-toggle-light-icon" class="fas fa-sun hidden text-lg"></i>
+                    </button>
+                    
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('main.index') }}" class="nav-link {% if current_page == 'main.index' %}active{% endif %}">
+                            <i class="fas fa-home mr-1.5"></i> Home
+                        </a>
+                        <a href="{{ url_for('main.history') }}" class="nav-link {% if current_page == 'main.history' %}active{% endif %}">
+                            <i class="fas fa-clock-rotate-left mr-1.5"></i> Riwayat
+                        </a>
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="px-5 py-2 rounded-xl text-sm font-black bg-gradient-to-r from-blue-800 to-blue-600 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                            <i class="fas fa-gauge-high mr-1.5"></i> Admin
+                        </a>
+                        {% endif %}
+                        <div class="w-px h-8 bg-gray-200 dark:bg-slate-700 mx-2"></div>
+                        
+                        <a href="{{ url_for('main.profile') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition">
+                            <div class="w-8 h-8 bg-gradient-to-tr from-blue-700 to-blue-500 rounded-lg flex items-center justify-center text-xs font-black text-white">{{ current_user.username[0]|upper }}</div>
+                            <span class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ current_user.username }}</span>
+                        </a>
+                        
+                        <a href="{{ url_for('auth.logout') }}" class="nav-link text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                            <i class="fas fa-right-from-bracket mr-1"></i> Logout
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="nav-link {% if current_page == 'auth.login' %}active{% endif %}">Login</a>
+                        <a href="{{ url_for('auth.register') }}" class="px-6 py-2.5 rounded-xl text-sm font-black bg-gradient-to-r from-blue-800 to-blue-600 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div class="sm:hidden hidden" id="mobile-menu">
+            <div class="px-4 pt-3 pb-5 space-y-1 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.index') }}" class="block px-5 py-3 rounded-xl text-base font-bold {% if current_page == 'main.index' %}text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800{% endif %} transition">
+                        <i class="fas fa-home mr-2 w-5 text-center"></i> Home
+                    </a>
+                    <a href="{{ url_for('main.history') }}" class="block px-5 py-3 rounded-xl text-base font-bold {% if current_page == 'main.history' %}text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800{% endif %} transition">
+                        <i class="fas fa-clock-rotate-left mr-2 w-5 text-center"></i> Riwayat
+                    </a>
+                    <a href="{{ url_for('main.profile') }}" class="block px-5 py-3 rounded-xl text-base font-bold {% if current_page == 'main.profile' %}text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800{% endif %} transition">
+                        <i class="fas fa-user mr-2 w-5 text-center"></i> Profil
+                    </a>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="block px-5 py-3 rounded-xl text-base font-black text-white bg-gradient-to-r from-blue-800 to-blue-600">
+                        <i class="fas fa-gauge-high mr-2 w-5 text-center"></i> Admin
+                    </a>
+                    {% endif %}
+                    <hr class="my-2 border-gray-100 dark:border-slate-800">
+                    <a href="{{ url_for('auth.logout') }}" class="block px-5 py-3 rounded-xl text-base font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                        <i class="fas fa-right-from-bracket mr-2 w-5 text-center"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="block px-5 py-3 rounded-xl text-base font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="block px-5 py-3 rounded-xl text-base font-black text-white bg-gradient-to-r from-blue-800 to-blue-600 text-center">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set colors = {'success': 'green', 'danger': 'red', 'error': 'red', 'warning': 'amber', 'info': 'blue'} %}
+                    {% set c = colors.get(category, 'blue') %}
+                    <div class="clay-card mb-5 p-5 flex justify-between items-center animate-slide-up border-l-4 border-{{ c }}-400 dark:border-{{ c }}-500">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-{{ c }}-100 dark:bg-{{ c }}-900/50 flex items-center justify-center flex-shrink-0">
+                                {% if category == 'success' %}<i class="fas fa-check text-green-600 dark:text-green-400 text-lg"></i>
+                                {% elif category in ['danger','error'] %}<i class="fas fa-exclamation text-red-600 dark:text-red-400 text-lg"></i>
+                                {% elif category == 'warning' %}<i class="fas fa-exclamation-triangle text-amber-600 dark:text-amber-400 text-lg"></i>
+                                {% else %}<i class="fas fa-info text-blue-600 dark:text-blue-400 text-lg"></i>{% endif %}
+                            </div>
+                            <span class="text-base font-semibold text-gray-700 dark:text-gray-200">{{ message }}</span>
+                        </div>
+                        <button onclick="this.closest('.clay-card').style.opacity='0';setTimeout(()=>this.closest('.clay-card').remove(),300)" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition p-2"><i class="fas fa-times text-lg"></i></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="py-8 mt-auto border-t border-gray-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center text-gray-400 dark:text-gray-600 font-semibold text-sm">
+            &copy; 2026 PrintManager &mdash; Built with <i class="fas fa-heart text-red-400 animate-bounce-soft"></i>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        if(btn && menu) btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+
+        // Theme toggling logic
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const themeToggleDarkIconMobile = document.getElementById('theme-toggle-dark-icon-mobile');
+        const themeToggleLightIconMobile = document.getElementById('theme-toggle-light-icon-mobile');
+
+        // Change the icons inside the button based on previous settings
+        function setIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+                themeToggleLightIconMobile.classList.remove('hidden');
+                themeToggleDarkIconMobile.classList.add('hidden');
+            } else {
+                themeToggleDarkIcon.classList.remove('hidden');
+                themeToggleLightIcon.classList.add('hidden');
+                themeToggleDarkIconMobile.classList.remove('hidden');
+                themeToggleLightIconMobile.classList.add('hidden');
+            }
+        }
+        setIcons();
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+            setIcons();
+        }
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleBtnMobile = document.getElementById('theme-toggle-mobile');
+        if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
+        if(themeToggleBtnMobile) themeToggleBtnMobile.addEventListener('click', toggleTheme);
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

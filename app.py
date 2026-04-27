@@ -1,16 +1,7 @@
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_migrate import Migrate
 from config import Config
-
-db = SQLAlchemy()
-login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
-login_manager.login_message = "Silakan login untuk mengakses halaman ini."
-login_manager.login_message_category = "warning"
-migrate = Migrate()
+from extensions import db, login_manager, migrate
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
@@ -25,11 +16,15 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     migrate.init_app(app, db)
 
-    from . import auth, main, admin
+    import auth, main, admin
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(admin.bp)
 
-    app.add_url_rule('/', endpoint='index')
-
     return app
+
+app = create_app()
+
+if __name__ == '__main__':
+    # debug=True hanya untuk development lokal
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true')

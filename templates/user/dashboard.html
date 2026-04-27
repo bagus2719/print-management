@@ -1,0 +1,215 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<!-- Welcome Banner -->
+<div class="clay-card p-6 sm:p-8 mb-8 bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white relative overflow-hidden micro-hover">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+    <div class="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4"></div>
+    <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black">Halo, {{ current_user.username }}! 👋</h1>
+            <p class="text-white/80 mt-2 text-lg">Selamat datang di PrintManager. Upload file PDF dan atur konfigurasi cetak Anda.</p>
+        </div>
+        <div class="flex-shrink-0">
+            <div class="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center animate-bounce-soft shadow-inner border border-white/20">
+                <i class="fas fa-print text-3xl text-white"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload + Pricing side by side -->
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+    <!-- Upload (3/5) -->
+    <div class="lg:col-span-3">
+        <div class="clay-card overflow-hidden h-full">
+            <div class="p-6 sm:p-8 flex flex-col justify-center h-full">
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="w-14 h-14 bg-gradient-to-tr from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-blue-700 dark:text-blue-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-gray-800">Upload File Baru</h3>
+                        <p class="text-sm text-gray-400">Upload satu atau beberapa file PDF untuk dicetak.</p>
+                    </div>
+                </div>
+                <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
+                    <div class="clay-card-inset p-5 flex items-center gap-4 cursor-pointer hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition group mb-4" onclick="document.getElementById('files').click()">
+                        <div class="w-12 h-12 bg-gradient-to-tr from-blue-100 to-indigo-100 dark:from-blue-800 dark:to-indigo-800 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+                            <i class="fas fa-file-pdf text-2xl text-blue-700 dark:text-blue-300"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-base font-bold text-gray-600 custom-file-label-text">Klik untuk pilih file PDF</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Bisa pilih lebih dari satu file</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 group-hover:text-blue-500 transition"></i>
+                        <input id="files" name="files" type="file" class="sr-only" required multiple accept=".pdf">
+                    </div>
+                    <button type="submit" class="clay-btn w-full py-4 text-base font-black text-white bg-gradient-to-r from-blue-800 to-blue-600 hover:from-blue-900 hover:to-blue-700 flex items-center justify-center gap-2">
+                        Lanjutkan ke Konfigurasi <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing (2/5) -->
+    <div class="lg:col-span-2">
+        <div class="clay-card p-6 sm:p-8 h-full flex flex-col">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-tags text-emerald-500 dark:text-emerald-400 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-800">Info Harga</h3>
+            </div>
+            <div class="space-y-3 flex-1">
+                <div class="clay-card-inset p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center"><i class="fas fa-box text-indigo-500 dark:text-indigo-400"></i></div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-700">Kertas dari Kami</p>
+                            <p class="text-xs text-gray-400">HVS 70gsm A4</p>
+                        </div>
+                    </div>
+                    <span class="text-lg font-black text-indigo-600 dark:text-indigo-400">Rp 300<span class="text-xs text-gray-400 font-normal">/hlm</span></span>
+                </div>
+                <div class="clay-card-inset p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center"><i class="fas fa-hand-holding text-emerald-500 dark:text-emerald-400"></i></div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-700">Bawa Sendiri</p>
+                            <p class="text-xs text-gray-400">Jasa cetak saja</p>
+                        </div>
+                    </div>
+                    <span class="text-lg font-black text-emerald-600 dark:text-emerald-400">Rp 150<span class="text-xs text-gray-400 font-normal">/hlm</span></span>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-t border-gray-100 dark:border-slate-700">
+                <p class="text-xs text-gray-400 flex items-center gap-2"><i class="fas fa-info-circle text-indigo-400"></i> Harga sudah termasuk tinta. Minimum 1 halaman.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Jobs -->
+<div class="clay-card overflow-hidden mb-8">
+    <div class="bg-gradient-to-r from-blue-800 to-indigo-900 px-6 py-5 flex items-center justify-between">
+        <h3 class="text-xl font-black text-white flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20"><i class="fas fa-history text-white"></i></div>
+            Riwayat Terbaru
+        </h3>
+        <a href="{{ url_for('main.history') }}" class="text-sm font-bold text-white/80 hover:text-white transition flex items-center gap-1">
+            Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead class="bg-slate-50/80 dark:bg-slate-800/80"><tr>
+                <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase">Waktu</th>
+                <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase">File & Detail</th>
+                <th class="px-5 py-3 text-center text-xs font-bold text-gray-500 uppercase">Status</th>
+                <th class="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase">Biaya</th>
+                <th class="px-5 py-3 text-center text-xs font-bold text-gray-500 uppercase">Pembayaran</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                {% for job in recent_jobs %}
+                <tr class="hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition">
+                    <td class="px-5 py-3.5 text-xs text-gray-400 whitespace-nowrap">{{ job.upload_time.strftime('%d/%m %H:%M') }}</td>
+                    <td class="px-5 py-3.5">
+                        <a href="{{ url_for('main.view_pdf', job_id=job.id) }}" target="_blank" class="text-sm font-bold text-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-2">
+                            <i class="far fa-file-pdf text-red-400"></i> {{ job.display_name }}
+                        </a>
+                        <p class="text-xs text-gray-400 mt-0.5">{{ job.pages }} hlm × {{ job.copies }} kopi</p>
+                    </td>
+                    <td class="px-5 py-3.5 text-center">
+                        {% set sc = {'pending':'amber','printing':'blue','completed':'green','failed':'red'} %}
+                        <span class="badge-clay bg-{{ sc.get(job.status,'gray') }}-100 dark:bg-{{ sc.get(job.status,'gray') }}-900/30 text-{{ sc.get(job.status,'gray') }}-700 dark:text-{{ sc.get(job.status,'gray') }}-400">{{ job.status }}</span>
+                    </td>
+                    <td class="px-5 py-3.5 text-sm font-black text-gray-800 text-right">Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}</td>
+                    <td class="px-5 py-3.5 text-center">
+                        {% if job.payment_status == 'paid' %}
+                            <span class="badge-clay bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"><i class="fas fa-check-circle mr-1"></i>Lunas</span>
+                        {% elif job.payment_status == 'waiting' %}
+                            <span class="badge-clay bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"><i class="fas fa-clock mr-1"></i>Menunggu</span>
+                        {% else %}
+                            <a href="{{ url_for('main.payment', job_id=job.id) }}" class="clay-btn px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 inline-block hover:from-emerald-600 hover:to-teal-600">
+                                <i class="fas fa-credit-card mr-1"></i> Bayar
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-5 py-10 text-center">
+                        <i class="fas fa-inbox text-4xl text-gray-200 dark:text-gray-700 mb-3 block"></i>
+                        <p class="text-sm text-gray-400">Belum ada riwayat cetak. Upload file PDF pertama Anda!</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if recent_jobs %}
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-slate-700 text-center">
+        <a href="{{ url_for('main.history') }}" class="clay-btn inline-flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition">
+            <i class="fas fa-list"></i> Lihat Semua Riwayat
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Cara Kerja (Full Width) -->
+<div class="clay-card p-6 sm:p-8 mb-8">
+    <h3 class="text-lg font-black text-gray-800 mb-6 flex items-center gap-2">
+        <i class="fas fa-route text-indigo-500"></i> Cara Kerja
+    </h3>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="clay-card-inset p-5 text-center micro-hover">
+            <div class="w-14 h-14 mx-auto bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center mb-3">
+                <i class="fas fa-upload text-indigo-500 text-2xl"></i>
+            </div>
+            <div class="w-8 h-8 mx-auto bg-indigo-500 rounded-full flex items-center justify-center text-sm font-black text-white mb-2 -mt-1">1</div>
+            <p class="text-sm font-black text-gray-700">Upload PDF</p>
+            <p class="text-xs text-gray-400 mt-1">Pilih file yang ingin dicetak</p>
+        </div>
+        <div class="clay-card-inset p-5 text-center micro-hover">
+            <div class="w-14 h-14 mx-auto bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mb-3">
+                <i class="fas fa-sliders-h text-purple-500 text-2xl"></i>
+            </div>
+            <div class="w-8 h-8 mx-auto bg-purple-500 rounded-full flex items-center justify-center text-sm font-black text-white mb-2 -mt-1">2</div>
+            <p class="text-sm font-black text-gray-700">Konfigurasi</p>
+            <p class="text-xs text-gray-400 mt-1">Atur kopi & sumber kertas</p>
+        </div>
+        <div class="clay-card-inset p-5 text-center micro-hover">
+            <div class="w-14 h-14 mx-auto bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center mb-3">
+                <i class="fas fa-credit-card text-emerald-500 text-2xl"></i>
+            </div>
+            <div class="w-8 h-8 mx-auto bg-emerald-500 rounded-full flex items-center justify-center text-sm font-black text-white mb-2 -mt-1">3</div>
+            <p class="text-sm font-black text-gray-700">Bayar</p>
+            <p class="text-xs text-gray-400 mt-1">Transfer via BCA / DANA / SPay</p>
+        </div>
+        <div class="clay-card-inset p-5 text-center micro-hover">
+            <div class="w-14 h-14 mx-auto bg-pink-100 dark:bg-pink-900/40 rounded-2xl flex items-center justify-center mb-3">
+                <i class="fas fa-box-open text-pink-500 text-2xl"></i>
+            </div>
+            <div class="w-8 h-8 mx-auto bg-pink-500 rounded-full flex items-center justify-center text-sm font-black text-white mb-2 -mt-1">4</div>
+            <p class="text-sm font-black text-gray-700">Ambil Hasil</p>
+            <p class="text-xs text-gray-400 mt-1">Dokumen siap diambil!</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+    const fi = document.getElementById('files');
+    const lt = document.querySelector('.custom-file-label-text');
+    if(fi) fi.addEventListener('change', e => {
+        const f = e.target.files;
+        if(f.length > 1) lt.innerHTML = `<span class="text-blue-700 dark:text-blue-400">${f.length} file terpilih</span>`;
+        else if(f.length === 1) lt.innerHTML = `<span class="text-blue-700 dark:text-blue-400">${f[0].name}</span>`;
+        else lt.textContent = 'Klik untuk pilih file PDF';
+    });
+</script>
+{% endblock %}

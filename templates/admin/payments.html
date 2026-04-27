@@ -1,0 +1,92 @@
+{% extends 'layouts/admin.html' %}
+{% block title %}Kelola Pembayaran{% endblock %}
+{% block header %}<i class="fas fa-credit-card text-emerald-500 mr-2"></i> Kelola Pembayaran{% endblock %}
+{% block content %}
+<div class="clay-card-admin overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <p class="text-base text-gray-500">Total: <span class="font-black text-gray-800">{{ payments|length }} pembayaran</span></p>
+        <form action="{{ url_for('admin.manage_payments') }}" method="get">
+            <select name="status" class="text-sm rounded-xl border-gray-200 py-2.5 px-4 focus:ring-indigo-500 shadow-sm" onchange="this.form.submit()">
+                <option value="">Semua Status</option>
+                <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="confirmed" {% if current_status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </form>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead class="bg-gray-800 text-white"><tr>
+                <th class="px-5 py-4 text-left text-sm font-bold uppercase">ID</th>
+                <th class="px-5 py-4 text-left text-sm font-bold uppercase">User</th>
+                <th class="px-5 py-4 text-left text-sm font-bold uppercase">Metode</th>
+                <th class="px-5 py-4 text-left text-sm font-bold uppercase">Pengirim</th>
+                <th class="px-5 py-4 text-center text-sm font-bold uppercase">Bukti</th>
+                <th class="px-5 py-4 text-right text-sm font-bold uppercase">Jumlah</th>
+                <th class="px-5 py-4 text-center text-sm font-bold uppercase">Status</th>
+                <th class="px-5 py-4 text-center text-sm font-bold uppercase">Waktu</th>
+                <th class="px-5 py-4 text-center text-sm font-bold uppercase w-32">Aksi</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for p in payments %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-5 py-4 text-base text-gray-400 font-mono">#{{ p.id }}</td>
+                    <td class="px-5 py-4 text-base font-bold text-gray-700">{{ p.payer.username }}</td>
+                    <td class="px-5 py-4">
+                        {% if p.method == 'bca' %}
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-blue-100 text-blue-700">BCA</span>
+                        {% elif p.method == 'dana' %}
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-blue-50 text-blue-500">DANA</span>
+                        {% elif p.method == 'shopeepay' %}
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-orange-100 text-orange-600">SPay</span>
+                        {% elif p.method == 'qris' %}
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-purple-100 text-purple-600">QRIS</span>
+                        {% else %}
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-gray-100 text-gray-600">{{ p.method|upper }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-base text-gray-600">{{ p.account_name }}</td>
+                    <td class="px-5 py-4 text-center">
+                        {% if p.proof_filename %}
+                        <a href="{{ url_for('main.view_proof', filename=p.proof_filename) }}" target="_blank" class="inline-block w-12 h-12 rounded-xl overflow-hidden shadow-md hover:shadow-lg hover:scale-110 transition-transform border-2 border-white">
+                            <img src="{{ url_for('main.view_proof', filename=p.proof_filename) }}" alt="Bukti" class="w-full h-full object-cover">
+                        </a>
+                        {% else %}
+                        <span class="text-sm text-gray-300">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-base font-bold text-gray-800 text-right">Rp {{ "{:,.0f}".format(p.amount)|replace(',', '.') }}</td>
+                    <td class="px-5 py-4 text-center">
+                        {% set pc = {'pending':'amber','confirmed':'green','rejected':'red'} %}
+                        <span class="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-{{ pc.get(p.status,'gray') }}-100 text-{{ pc.get(p.status,'gray') }}-700">{{ p.status }}</span>
+                    </td>
+                    <td class="px-5 py-4 text-center text-sm text-gray-400">{{ p.created_at.strftime('%d/%m %H:%M') }}</td>
+                    <td class="px-5 py-4 text-center">
+                        {% if p.status == 'pending' %}
+                        <div class="flex justify-center gap-2">
+                            <form action="{{ url_for('admin.confirm_payment', payment_id=p.id) }}" method="post" class="inline">
+                                <button type="submit" class="w-9 h-9 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center transition" title="Konfirmasi">
+                                    <i class="fas fa-check text-green-600 text-lg"></i>
+                                </button>
+                            </form>
+                            <form action="{{ url_for('admin.reject_payment', payment_id=p.id) }}" method="post" class="inline" onsubmit="return confirm('Tolak pembayaran ini?')">
+                                <button type="submit" class="w-9 h-9 rounded-xl bg-red-100 hover:bg-red-200 flex items-center justify-center transition" title="Tolak">
+                                    <i class="fas fa-times text-red-600 text-lg"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% elif p.status == 'confirmed' %}
+                            <span class="text-lg text-green-600 font-bold"><i class="fas fa-check-circle"></i></span>
+                        {% else %}
+                            <span class="text-lg text-red-500 font-bold"><i class="fas fa-times-circle"></i></span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="px-6 py-14 text-center text-base text-gray-400"><i class="fas fa-credit-card text-4xl text-gray-200 block mb-3"></i>Belum ada pembayaran.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
