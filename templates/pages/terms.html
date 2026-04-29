@@ -1,0 +1,64 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Syarat dan Ketentuan{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-slide-up">
+        <div class="bg-blue-800 px-8 py-6">
+            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-file-contract text-blue-300"></i>
+                Syarat dan Ketentuan
+            </h1>
+        </div>
+        <div class="p-8 prose prose-sm max-w-none text-gray-700 space-y-6">
+            <p class="text-sm text-gray-500">Terakhir diperbarui: 28 April 2026</p>
+
+            <h2 class="text-lg font-bold text-gray-800 mt-6">1. Pendahuluan</h2>
+            <p>Selamat datang di PrintManager. Dengan menggunakan layanan kami, Anda menyetujui syarat dan ketentuan berikut ini. Harap baca dengan saksama sebelum menggunakan platform kami.</p>
+
+            <h2 class="text-lg font-bold text-gray-800">2. Deskripsi Layanan</h2>
+            <p>PrintManager adalah platform jasa cetak dokumen online. Kami menyediakan layanan pencetakan dokumen (PDF dan gambar) dengan berbagai opsi konfigurasi meliputi warna/hitam putih, ukuran kertas (A4, F4, A3), serta pilihan simplex/duplex.</p>
+
+            <h2 class="text-lg font-bold text-gray-800">3. Kewajiban Pengguna</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>Pengguna bertanggung jawab penuh atas konten file yang diunggah dan dicetak melalui platform kami.</li>
+                <li>Dilarang mengunggah file yang mengandung konten ilegal, pornografi, ujaran kebencian, atau materi yang melanggar hukum Republik Indonesia.</li>
+                <li>Pengguna wajib memastikan bahwa file yang diunggah tidak melanggar hak cipta pihak ketiga.</li>
+                <li>Pengguna wajib memberikan informasi yang benar dan akurat saat melakukan registrasi.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">4. Proses Pemesanan dan Pembayaran</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>Pesanan dianggap sah setelah pembayaran berhasil dikonfirmasi.</li>
+                <li>Pembayaran diproses melalui gateway pembayaran <strong>Midtrans</strong> yang menjamin keamanan transaksi.</li>
+                <li>Metode pembayaran yang tersedia meliputi: Bank Transfer (Virtual Account), QRIS, E-Wallet (GoPay, ShopeePay), dan pembayaran di minimarket (Indomaret, Alfamart).</li>
+                <li>Pembayaran tunai (cash) juga tersedia dengan konfirmasi langsung dari admin.</li>
+                <li>Harga sudah termasuk biaya tinta. Harga dapat berubah sewaktu-waktu tanpa pemberitahuan sebelumnya.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">5. Proses Cetak dan Pengambilan</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>Setelah pembayaran dikonfirmasi, pesanan akan diproses sesuai antrian.</li>
+                <li>Estimasi waktu cetak bergantung pada jumlah antrian dan kompleksitas pesanan.</li>
+                <li>Hasil cetakan dapat diambil langsung di lokasi kami setelah status pesanan berubah menjadi "Selesai".</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">6. Batasan Tanggung Jawab</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>PrintManager tidak bertanggung jawab atas konten yang dicetak oleh pengguna.</li>
+                <li>Kami tidak bertanggung jawab atas kerugian yang timbul akibat kesalahan informasi yang diberikan oleh pengguna (misalnya jumlah kopi, warna, atau ukuran kertas yang salah).</li>
+                <li>Kami berhak menolak pesanan yang dianggap melanggar ketentuan ini tanpa penjelasan lebih lanjut.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">7. Perubahan Ketentuan</h2>
+            <p>Kami berhak mengubah syarat dan ketentuan ini sewaktu-waktu. Perubahan akan berlaku efektif setelah dipublikasikan di halaman ini. Dengan terus menggunakan layanan kami, Anda dianggap menyetujui perubahan tersebut.</p>
+
+            <h2 class="text-lg font-bold text-gray-800">8. Kontak</h2>
+            <p>Jika Anda memiliki pertanyaan mengenai syarat dan ketentuan ini, silakan hubungi kami melalui:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Email: <a href="mailto:bagustrialahmadi27@gmail.com" class="text-blue-600 hover:underline">bagustrialahmadi27@gmail.com</a></li>
+                <li>WhatsApp: <a href="https://wa.me/6283111481327" class="text-blue-600 hover:underline">083111481327</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

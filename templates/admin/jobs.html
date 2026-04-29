@@ -2,7 +2,7 @@
 {% block title %}Kelola Pekerjaan{% endblock %}
 {% block header %}<i class="fas fa-print text-indigo-500 mr-2"></i> Pekerjaan Cetak{% endblock %}
 {% block content %}
-<form id="bulk-action-form" action="{{ url_for('admin.bulk_delete') }}" method="post"></form>
+<form id="bulk-action-form" action="{{ url_for('admin.bulk_delete') }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
 
 <div class="clay-card-admin overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -34,6 +34,7 @@
                 <th class="px-4 py-3 text-left text-xs font-bold uppercase">File</th>
                 <th class="px-4 py-3 text-left text-xs font-bold uppercase">Detail</th>
                 <th class="px-4 py-3 text-center text-xs font-bold uppercase">Status</th>
+                <th class="px-4 py-3 text-center text-xs font-bold uppercase">Bayar</th>
                 <th class="px-4 py-3 text-center text-xs font-bold uppercase w-48">Aksi</th>
             </tr></thead>
             <tbody class="divide-y divide-gray-100">
@@ -53,6 +54,36 @@
                         {% set sc = {'pending':'amber','printing':'blue','completed':'green','failed':'red'} %}
                         <span class="px-2 py-1 rounded-lg text-[10px] font-bold uppercase bg-{{ sc.get(job.status,'gray') }}-100 text-{{ sc.get(job.status,'gray') }}-700">{{ job.status }}</span>
                     </td>
+                    <td class="px-4 py-3 text-center">
+                        {% if job.payment_status == 'paid' %}
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="px-2 py-1 rounded-lg text-[10px] font-bold uppercase bg-green-100 text-green-700"><i class="fas fa-check-circle mr-0.5"></i>Lunas</span>
+                            <form action="{{ url_for('admin.set_payment_status', job_id=job.id, new_status='unpaid') }}" method="post" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="text-[10px] text-gray-400 hover:text-red-500 transition" title="Reset ke Unpaid" onclick="return confirm('Reset status pembayaran ke Belum Bayar?')">
+                                    <i class="fas fa-undo"></i> reset
+                                </button>
+                            </form>
+                        </div>
+                        {% elif job.payment_status == 'waiting' %}
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="px-2 py-1 rounded-lg text-[10px] font-bold uppercase bg-amber-100 text-amber-700"><i class="fas fa-clock mr-0.5"></i>Menunggu</span>
+                            <form action="{{ url_for('admin.set_payment_status', job_id=job.id, new_status='paid') }}" method="post" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="text-[10px] text-green-600 hover:text-green-700 font-bold transition" title="Tandai Lunas">
+                                    <i class="fas fa-check"></i> Lunas
+                                </button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <form action="{{ url_for('admin.set_payment_status', job_id=job.id, new_status='paid') }}" method="post" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white bg-green-600 hover:bg-green-700 transition shadow-sm" title="Tandai Lunas (misal: bukti via WA)">
+                                <i class="fas fa-check mr-0.5"></i> Tandai Lunas
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
                     <td class="px-4 py-3 text-center space-y-1">
                         <div class="flex justify-center gap-1">
                             <a href="{{ url_for('main.view_pdf', job_id=job.id) }}" target="_blank" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition" title="Lihat"><i class="fas fa-eye text-xs text-gray-600"></i></a>
@@ -60,22 +91,26 @@
                         </div>
                         <div class="flex justify-center gap-1">
                             <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='printing') }}" method="post" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="w-7 h-7 rounded-lg bg-blue-100 hover:bg-blue-200 flex items-center justify-center transition disabled:opacity-30" title="Proses" {% if job.status != 'pending' %}disabled{% endif %}><i class="fas fa-sync-alt text-xs text-blue-600"></i></button>
                             </form>
                             <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='completed') }}" method="post" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="w-7 h-7 rounded-lg bg-green-100 hover:bg-green-200 flex items-center justify-center transition disabled:opacity-30" title="Selesai" {% if job.status != 'printing' %}disabled{% endif %}><i class="fas fa-check text-xs text-green-600"></i></button>
                             </form>
                             <form action="{{ url_for('admin.update_status', job_id=job.id, new_status='failed') }}" method="post" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="w-7 h-7 rounded-lg bg-amber-100 hover:bg-amber-200 flex items-center justify-center transition disabled:opacity-30" title="Gagal" {% if job.status != 'printing' %}disabled{% endif %}><i class="fas fa-times text-xs text-amber-600"></i></button>
                             </form>
                             <form action="{{ url_for('admin.delete_job', job_id=job.id) }}" method="post" class="inline form-delete">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="w-7 h-7 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center transition" title="Hapus"><i class="fas fa-trash text-xs text-red-600"></i></button>
                             </form>
                         </div>
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400"><i class="fas fa-inbox text-3xl text-gray-200 block mb-2"></i>Tidak ada data.</td></tr>
+                <tr><td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400"><i class="fas fa-inbox text-3xl text-gray-200 block mb-2"></i>Tidak ada data.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

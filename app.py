@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from config import Config
-from extensions import db, login_manager, migrate
+from extensions import db, login_manager, migrate, csrf
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
@@ -15,6 +15,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
+    csrf.init_app(app)
 
     import auth, main, admin
     app.register_blueprint(auth.bp)
@@ -27,4 +28,4 @@ app = create_app()
 
 if __name__ == '__main__':
     # debug=True hanya untuk development lokal
-    app.run(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true')
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true', host='0.0.0.0', port=5000)

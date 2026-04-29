@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Print Management{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -38,67 +39,34 @@
         }
     </script>
     <style>
-        .clay-card {
-            background: #ffffff;
-            border-radius: 24px;
-            box-shadow: 10px 10px 20px rgba(0,0,0,0.1), -10px -10px 20px rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .dark .clay-card {
-            background: #1e293b;
-            box-shadow: 10px 10px 20px rgba(0,0,0,0.3), -10px -10px 20px rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            color: #f1f5f9;
-        }
-        
-        .clay-card-inset {
-            background: #f1f5f9;
-            border-radius: 18px;
-            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.05), inset -3px -3px 6px rgba(255,255,255,0.5);
-        }
-        .dark .clay-card-inset {
-            background: #0f172a;
-            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3), inset -3px -3px 6px rgba(255,255,255,0.05);
-            color: #f1f5f9;
-        }
-
-        .clay-btn {
-            border-radius: 16px;
-            box-shadow: 4px 4px 10px rgba(0,0,0,0.1), -4px -4px 10px rgba(255,255,255,0.1);
-            transition: all 0.25s cubic-bezier(.4,0,.2,1);
-        }
-        .dark .clay-btn {
-            box-shadow: 4px 4px 10px rgba(0,0,0,0.3), -4px -4px 10px rgba(255,255,255,0.02);
-        }
-        .clay-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 6px 6px 14px rgba(0,0,0,0.15), -6px -6px 14px rgba(255,255,255,0.1);
-        }
-        .dark .clay-btn:hover {
-            box-shadow: 6px 6px 14px rgba(0,0,0,0.4), -6px -6px 14px rgba(255,255,255,0.05);
-        }
-        .clay-btn:active {
-            transform: translateY(0);
-        }
-
-        .clay-input {
-            background: #f1f5f9;
-            border-radius: 14px;
-            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.05), inset -3px -3px 6px rgba(255,255,255,0.5);
-            border: none;
-            transition: all 0.3s;
-        }
-        .dark .clay-input {
-            background: #0f172a;
-            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3), inset -3px -3px 6px rgba(255,255,255,0.05);
-            color: white;
-        }
-        .clay-input:focus {
-            outline: 2px solid rgba(30,64,175,0.5);
-        }
-
         .micro-hover { transition: all 0.3s cubic-bezier(.4,0,.2,1); }
         .micro-hover:hover { transform: translateY(-5px) scale(1.01); }
+
+        /* Floating WhatsApp Button */
+        .wa-float {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            bottom: 40px;
+            right: 40px;
+            background-color: #25d366;
+            color: #FFF;
+            border-radius: 50px;
+            text-align: center;
+            font-size: 30px;
+            box-shadow: 2px 2px 3px #999;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none !important;
+        }
+        .wa-float:hover {
+            transform: scale(1.1);
+            color: #FFF;
+            box-shadow: 2px 2px 10px rgba(37, 211, 102, 0.6);
+        }
 
         /* Navbar link styles */
         .nav-link {
@@ -142,12 +110,70 @@
         .dark .bg-gray-50 { background-color: #1e293b; }
         .dark .bg-gray-100 { background-color: #334155; }
         .dark .border-gray-100 { border-color: #334155; }
-        
+
+        /* Card & container dark mode */
+        .dark .bg-white { background-color: #0f172a; }
+        .dark .border-gray-200 { border-color: #1e293b; }
+        .dark .border-gray-300 { border-color: #334155; }
+        .dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b; }
+
+        /* Blue accent dark mode */
+        .dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.15); }
+        .dark .bg-blue-100 { background-color: rgba(30, 58, 138, 0.25); }
+        .dark .bg-blue-200 { background-color: rgba(30, 64, 175, 0.35); }
+        .dark .border-blue-100 { border-color: rgba(30, 58, 138, 0.3); }
+        .dark .border-blue-200 { border-color: rgba(37, 99, 235, 0.3); }
+        .dark .text-blue-700 { color: #93c5fd; }
+        .dark .text-blue-600 { color: #93c5fd; }
+        .dark .text-blue-800 { color: #bfdbfe; }
+
+        /* Status badge dark */
+        .dark .bg-green-100 { background-color: rgba(22, 101, 52, 0.25); }
+        .dark .text-green-700 { color: #86efac; }
+        .dark .text-green-600 { color: #86efac; }
+        .dark .bg-amber-100 { background-color: rgba(146, 64, 14, 0.25); }
+        .dark .text-amber-700 { color: #fcd34d; }
+        .dark .text-amber-600 { color: #fcd34d; }
+        .dark .bg-red-100 { background-color: rgba(127, 29, 29, 0.25); }
+        .dark .text-red-700 { color: #fca5a5; }
+
+        /* Input dark mode */
+        .dark input, .dark select, .dark textarea {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        .dark input::placeholder, .dark textarea::placeholder {
+            color: #64748b !important;
+        }
+        .dark input:focus, .dark select:focus, .dark textarea:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+        }
+
+        /* Button dark mode */
+        .dark .bg-blue-700 { background-color: #2563eb; }
+        .dark .hover\:bg-blue-800:hover { background-color: #1d4ed8; }
+        .dark .bg-blue-600 { background-color: #2563eb; }
+        .dark .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+
+        /* Border-dashed upload zone */
+        .dark .border-dashed { border-color: #475569 !important; }
+        .dark .hover\:bg-blue-50:hover { background-color: rgba(30, 58, 138, 0.15); }
+
+        /* Table dark */
+        .dark table thead { background-color: #1e293b; }
         .dark table thead th { color: #94a3b8; }
+        .dark table tbody tr:hover { background-color: rgba(30, 58, 138, 0.1) !important; }
+        .dark .border-t { border-color: #1e293b; }
+
+        /* Shadow removal in dark */
+        .dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .dark .shadow-lg { box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
     </style>
 </head>
 <!-- Light mode uses white/slate-50, dark mode uses very dark slate/gray -->
-<body class="bg-slate-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 font-sans antialiased min-h-screen flex flex-col text-base transition-colors duration-300">
+<body class="bg-slate-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 font-sans antialiased min-h-screen flex flex-col text-[17px] transition-colors duration-300">
     <!-- Navbar -->
     <nav class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl sticky top-0 z-50 border-b border-gray-200/60 dark:border-slate-800 shadow-sm transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -173,11 +199,6 @@
 
                 {% set current_page = request.endpoint %}
                 <div class="hidden sm:flex sm:items-center sm:gap-1">
-                    <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none rounded-xl text-sm p-2.5 mr-2 transition">
-                        <i id="theme-toggle-dark-icon" class="fas fa-moon hidden text-lg"></i>
-                        <i id="theme-toggle-light-icon" class="fas fa-sun hidden text-lg"></i>
-                    </button>
-                    
                     {% if current_user.is_authenticated %}
                         <a href="{{ url_for('main.index') }}" class="nav-link {% if current_page == 'main.index' %}active{% endif %}">
                             <i class="fas fa-home mr-1.5"></i> Home
@@ -192,17 +213,36 @@
                         {% endif %}
                         <div class="w-px h-8 bg-gray-200 dark:bg-slate-700 mx-2"></div>
                         
-                        <a href="{{ url_for('main.profile') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition">
-                            <div class="w-8 h-8 bg-gradient-to-tr from-blue-700 to-blue-500 rounded-lg flex items-center justify-center text-xs font-black text-white">{{ current_user.username[0]|upper }}</div>
-                            <span class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ current_user.username }}</span>
-                        </a>
-                        
-                        <a href="{{ url_for('auth.logout') }}" class="nav-link text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
-                            <i class="fas fa-right-from-bracket mr-1"></i> Logout
-                        </a>
+                        <!-- Profile Dropdown -->
+                        <div class="relative" id="profile-dropdown-wrapper">
+                            <button onclick="toggleProfileDropdown()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition">
+                                <div class="w-8 h-8 bg-gradient-to-tr from-blue-700 to-blue-500 rounded-lg flex items-center justify-center text-xs font-black text-white">{{ current_user.username[0]|upper }}</div>
+                                <span class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ current_user.username }}</span>
+                                <i class="fas fa-chevron-down text-[10px] text-gray-400 ml-1"></i>
+                            </button>
+                            <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-800 py-2 z-50">
+                                <a href="{{ url_for('main.profile') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition">
+                                    <i class="fas fa-user w-4 text-center text-gray-400"></i> Profil
+                                </a>
+                                <div class="border-t border-gray-100 dark:border-slate-800 my-1"></div>
+                                <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                    <i class="fas fa-right-from-bracket w-4 text-center"></i> Logout
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Theme Toggle (paling kanan) -->
+                        <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none rounded-xl text-sm p-2.5 ml-1 transition">
+                            <i id="theme-toggle-dark-icon" class="fas fa-moon hidden text-lg"></i>
+                            <i id="theme-toggle-light-icon" class="fas fa-sun hidden text-lg"></i>
+                        </button>
                     {% else %}
                         <a href="{{ url_for('auth.login') }}" class="nav-link {% if current_page == 'auth.login' %}active{% endif %}">Login</a>
                         <a href="{{ url_for('auth.register') }}" class="px-6 py-2.5 rounded-xl text-sm font-black bg-gradient-to-r from-blue-800 to-blue-600 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">Register</a>
+                        <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none rounded-xl text-sm p-2.5 ml-1 transition">
+                            <i id="theme-toggle-dark-icon" class="fas fa-moon hidden text-lg"></i>
+                            <i id="theme-toggle-light-icon" class="fas fa-sun hidden text-lg"></i>
+                        </button>
                     {% endif %}
                 </div>
             </div>
@@ -243,9 +283,9 @@
                 {% for category, message in messages %}
                     {% set colors = {'success': 'green', 'danger': 'red', 'error': 'red', 'warning': 'amber', 'info': 'blue'} %}
                     {% set c = colors.get(category, 'blue') %}
-                    <div class="clay-card mb-5 p-5 flex justify-between items-center animate-slide-up border-l-4 border-{{ c }}-400 dark:border-{{ c }}-500">
+                    <div class="bg-white rounded-xl shadow-sm border border-{{ c }}-200 dark:border-{{ c }}-800 mb-5 p-5 flex justify-between items-center animate-slide-up border-l-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-{{ c }}-100 dark:bg-{{ c }}-900/50 flex items-center justify-center flex-shrink-0">
+                            <div class="w-10 h-10 rounded-full bg-{{ c }}-100 dark:bg-{{ c }}-900/50 flex items-center justify-center flex-shrink-0">
                                 {% if category == 'success' %}<i class="fas fa-check text-green-600 dark:text-green-400 text-lg"></i>
                                 {% elif category in ['danger','error'] %}<i class="fas fa-exclamation text-red-600 dark:text-red-400 text-lg"></i>
                                 {% elif category == 'warning' %}<i class="fas fa-exclamation-triangle text-amber-600 dark:text-amber-400 text-lg"></i>
@@ -253,7 +293,7 @@
                             </div>
                             <span class="text-base font-semibold text-gray-700 dark:text-gray-200">{{ message }}</span>
                         </div>
-                        <button onclick="this.closest('.clay-card').style.opacity='0';setTimeout(()=>this.closest('.clay-card').remove(),300)" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition p-2"><i class="fas fa-times text-lg"></i></button>
+                        <button onclick="this.closest('.bg-white').style.opacity='0';setTimeout(()=>this.closest('.bg-white').remove(),300)" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition p-2"><i class="fas fa-times text-lg"></i></button>
                     </div>
                 {% endfor %}
             {% endif %}
@@ -261,9 +301,93 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="py-8 mt-auto border-t border-gray-200 dark:border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 text-center text-gray-400 dark:text-gray-600 font-semibold text-sm">
-            &copy; 2026 PrintManager &mdash; Built with <i class="fas fa-heart text-red-400 animate-bounce-soft"></i>
+    <footer class="mt-auto border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                
+                <!-- Tentang -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-9 h-9 bg-blue-700 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-print text-white text-sm"></i>
+                        </div>
+                        <span class="text-lg font-black text-gray-800">PrintManager</span>
+                    </div>
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        Layanan jasa cetak dokumen online yang cepat, aman, dan terpercaya. Upload file, atur konfigurasi, bayar, dan ambil hasil cetak Anda.
+                    </p>
+                </div>
+
+                <!-- Kontak & Alamat -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-800 uppercase tracking-wide mb-4">Kontak & Lokasi</h4>
+                    <ul class="space-y-3 text-sm text-gray-500">
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-map-marker-alt text-blue-600 mt-0.5"></i>
+                            <span>Tasikmadu, Kec. Lowokwaru, Kota Malang, Jawa Timur 65153</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fas fa-envelope text-blue-600"></i>
+                            <a href="mailto:bagustrialahmadi27@gmail.com" class="hover:text-blue-600 transition">bagustrialahmadi27@gmail.com</a>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fab fa-whatsapp text-blue-600"></i>
+                            <a href="https://wa.me/6283111481327" class="hover:text-blue-600 transition">083111481327</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Kebijakan -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-800 uppercase tracking-wide mb-4">Kebijakan</h4>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="{{ url_for('main.terms') }}" class="text-gray-500 hover:text-blue-600 transition flex items-center gap-2"><i class="fas fa-file-contract text-xs"></i> Syarat & Ketentuan</a></li>
+                        <li><a href="{{ url_for('main.privacy') }}" class="text-gray-500 hover:text-blue-600 transition flex items-center gap-2"><i class="fas fa-shield-alt text-xs"></i> Kebijakan Privasi</a></li>
+                        <li><a href="{{ url_for('main.refund') }}" class="text-gray-500 hover:text-blue-600 transition flex items-center gap-2"><i class="fas fa-undo-alt text-xs"></i> Kebijakan Refund</a></li>
+                    </ul>
+                </div>
+
+                <!-- Metode Pembayaran -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-800 uppercase tracking-wide mb-4">Metode Pembayaran</h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-center h-10">
+                            <span class="text-xs font-bold text-blue-700">BCA</span>
+                        </div>
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-center h-10">
+                            <span class="text-xs font-bold text-blue-700">BNI</span>
+                        </div>
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-center h-10">
+                            <span class="text-xs font-bold text-blue-700">BRI</span>
+                        </div>
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-center h-10">
+                            <span class="text-xs font-bold text-green-600">QRIS</span>
+                        </div>
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-center h-10">
+                            <span class="text-xs font-bold text-blue-500">GoPay</span>
+                        </div>
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-center h-10">
+                            <span class="text-xs font-bold text-orange-500">SPay</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2 text-xs text-gray-400">
+                        <i class="fas fa-lock"></i>
+                        <span>Secured by Midtrans</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom bar -->
+            <div class="mt-8 pt-6 border-t border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <p class="text-xs text-gray-400">&copy; 2026 PrintManager &mdash; Be A Good Store</p>
+                <div class="flex items-center gap-4 text-xs text-gray-400">
+                    <a href="{{ url_for('main.terms') }}" class="hover:text-blue-600 transition">Syarat</a>
+                    <span>·</span>
+                    <a href="{{ url_for('main.privacy') }}" class="hover:text-blue-600 transition">Privasi</a>
+                    <span>·</span>
+                    <a href="{{ url_for('main.refund') }}" class="hover:text-blue-600 transition">Refund</a>
+                </div>
+            </div>
         </div>
     </footer>
 
@@ -309,6 +433,119 @@
         const themeToggleBtnMobile = document.getElementById('theme-toggle-mobile');
         if(themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
         if(themeToggleBtnMobile) themeToggleBtnMobile.addEventListener('click', toggleTheme);
+    </script>
+    <!-- Custom Live Chat Widget -->
+    {% if current_user.is_authenticated and not current_user.is_admin %}
+    <div class="fixed bottom-6 right-6 z-[60] flex flex-col items-end">
+        <!-- Chat Window -->
+        <div id="chat-window" class="hidden mb-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden animate-slide-up origin-bottom-right">
+            <!-- Header -->
+            <div class="bg-blue-800 p-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-headset text-white"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Admin PrintManager</h4>
+                        <p class="text-[10px] text-blue-200 uppercase tracking-widest font-black">Online</p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-white/70 hover:text-white transition p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Messages Container -->
+            <div id="chat-messages" class="h-80 overflow-y-auto p-4 space-y-4 bg-gray-50/50 dark:bg-slate-900/50">
+                <!-- Messages will be loaded here -->
+            </div>
+            
+            <!-- Input Area -->
+            <form id="chat-form" class="p-4 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-2">
+                <input type="text" id="chat-input" placeholder="Tulis pesan..." class="flex-1 bg-gray-50 dark:bg-slate-800 border-none rounded-xl px-4 py-2 text-base focus:ring-2 focus:ring-blue-500 transition">
+                <button type="submit" class="w-10 h-10 bg-blue-700 text-white rounded-xl flex items-center justify-center hover:bg-blue-800 transition">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Floating Button -->
+        <div class="relative group">
+            <div id="chat-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full flex items-center justify-center text-[10px] font-bold text-white z-10 animate-bounce"></div>
+            <button onclick="toggleChat()" class="w-14 h-14 bg-blue-700 hover:bg-blue-800 text-white rounded-2xl shadow-xl hover:shadow-2xl flex items-center justify-center transition-all duration-300 hover:-translate-y-1 active:scale-95 animate-bounce-soft">
+                <i class="fas fa-comment-dots text-2xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let chatOpen = false;
+        const chatWindow = document.getElementById('chat-window');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatBadge = document.getElementById('chat-badge');
+
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            chatWindow.classList.toggle('hidden');
+            if(chatOpen) {
+                loadMessages();
+                chatBadge.classList.add('hidden');
+                setTimeout(() => chatInput.focus(), 100);
+            }
+        }
+
+        function loadMessages() {
+            fetch("{{ url_for('main.chat_messages') }}")
+            .then(r => r.json())
+            .then(data => {
+                const atBottom = chatMessages.scrollHeight - chatMessages.scrollTop <= chatMessages.clientHeight + 50;
+                
+                chatMessages.innerHTML = data.map(m => `
+                    <div class="flex ${m.is_from_admin ? 'justify-start' : 'justify-end'}">
+                        <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-base ${m.is_from_admin ? 'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 rounded-tl-none shadow-sm' : 'bg-blue-700 text-white rounded-tr-none shadow-md'}">
+                            <p>${m.message}</p>
+                            <p class="text-[11px] mt-1 opacity-60 text-right">${m.time}</p>
+                        </div>
+                    </div>
+                `).join('') || '<p class="text-center text-xs text-gray-400 py-4">Belum ada pesan. Sapa admin sekarang!</p>';
+                
+                if(atBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        chatForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const msg = chatInput.value.trim();
+            if(!msg) return;
+
+            const fd = new FormData();
+            fd.append('message', msg);
+            fd.append('csrf_token', '{{ csrf_token() }}');
+
+            chatInput.value = '';
+            fetch("{{ url_for('main.chat_send') }}", { method: 'POST', body: fd })
+            .then(() => loadMessages());
+        });
+
+        // Polling for new messages
+        setInterval(() => {
+            if(chatOpen) loadMessages();
+        }, 3000);
+    </script>
+    {% endif %}
+
+    <script>
+    function toggleProfileDropdown() {
+        document.getElementById('profile-dropdown').classList.toggle('hidden');
+    }
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('profile-dropdown-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            document.getElementById('profile-dropdown').classList.add('hidden');
+        }
+    });
     </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     {% block extra_js %}{% endblock %}

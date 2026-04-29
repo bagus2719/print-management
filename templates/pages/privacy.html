@@ -1,0 +1,79 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Kebijakan Privasi{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-slide-up">
+        <div class="bg-blue-800 px-8 py-6">
+            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-shield-alt text-blue-300"></i>
+                Kebijakan Privasi
+            </h1>
+        </div>
+        <div class="p-8 prose prose-sm max-w-none text-gray-700 space-y-6">
+            <p class="text-sm text-gray-500">Terakhir diperbarui: 28 April 2026</p>
+
+            <h2 class="text-lg font-bold text-gray-800 mt-6">1. Informasi yang Kami Kumpulkan</h2>
+            <p>Saat Anda menggunakan layanan PrintManager, kami mengumpulkan informasi berikut:</p>
+            <ul class="list-disc pl-5 space-y-2">
+                <li><strong>Informasi Akun:</strong> Username dan password yang Anda buat saat registrasi.</li>
+                <li><strong>File Dokumen:</strong> File PDF dan gambar yang Anda unggah untuk dicetak.</li>
+                <li><strong>Data Transaksi:</strong> Riwayat pesanan, konfigurasi cetak, dan informasi pembayaran.</li>
+                <li><strong>Data Teknis:</strong> Alamat IP, jenis browser, dan informasi perangkat untuk keperluan keamanan.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">2. Penggunaan Informasi</h2>
+            <p>Informasi yang kami kumpulkan digunakan untuk:</p>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>Memproses dan menyelesaikan pesanan cetak Anda.</li>
+                <li>Mengelola akun dan autentikasi pengguna.</li>
+                <li>Memproses pembayaran melalui gateway Midtrans.</li>
+                <li>Berkomunikasi dengan Anda terkait status pesanan.</li>
+                <li>Meningkatkan kualitas layanan kami.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">3. Pengelolaan File Dokumen</h2>
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                <p class="text-sm font-semibold text-blue-800"><i class="fas fa-info-circle mr-2"></i>Penting:</p>
+                <ul class="list-disc pl-5 space-y-2 mt-2 text-sm">
+                    <li>File yang Anda unggah hanya digunakan untuk keperluan pencetakan.</li>
+                    <li>File akan <strong>dihapus secara permanen</strong> dari server kami dalam waktu <strong>7 hari</strong> setelah pesanan selesai dicetak atau dibatalkan.</li>
+                    <li>Kami <strong>tidak akan membaca, menyalin, mendistribusikan, atau membagikan</strong> isi dokumen Anda kepada pihak ketiga manapun.</li>
+                    <li>Akses ke file Anda hanya terbatas pada operator cetak yang bertugas memproses pesanan Anda.</li>
+                </ul>
+            </div>
+
+            <h2 class="text-lg font-bold text-gray-800">4. Keamanan Data</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>Password disimpan dalam bentuk <strong>hash terenkripsi</strong> dan tidak dapat dibaca oleh siapapun termasuk admin.</li>
+                <li>Pembayaran diproses melalui <strong>Midtrans</strong> yang tersertifikasi PCI-DSS Level 1, standar keamanan tertinggi untuk pemrosesan pembayaran.</li>
+                <li>Kami tidak menyimpan informasi kartu kredit/debit atau detail rekening bank Anda.</li>
+                <li>Komunikasi antara browser dan server dilindungi oleh enkripsi SSL/TLS.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">5. Berbagi Informasi dengan Pihak Ketiga</h2>
+            <p>Kami <strong>tidak menjual atau menyewakan</strong> data pribadi Anda. Informasi hanya dibagikan kepada:</p>
+            <ul class="list-disc pl-5 space-y-2">
+                <li><strong>Midtrans:</strong> Sebagai payment gateway untuk memproses pembayaran Anda (nama pengguna dan jumlah transaksi).</li>
+                <li><strong>Pihak Berwenang:</strong> Jika diwajibkan oleh hukum yang berlaku di Indonesia.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">6. Hak Pengguna</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>Anda dapat mengubah informasi akun kapan saja melalui halaman Profil.</li>
+                <li>Anda dapat meminta penghapusan akun dan semua data terkait dengan menghubungi kami.</li>
+                <li>Anda berhak mengetahui data apa saja yang kami simpan tentang Anda.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">7. Perubahan Kebijakan</h2>
+            <p>Kami dapat memperbarui kebijakan privasi ini sewaktu-waktu. Perubahan akan dipublikasikan di halaman ini dengan tanggal pembaruan terbaru.</p>
+
+            <h2 class="text-lg font-bold text-gray-800">8. Kontak</h2>
+            <p>Untuk pertanyaan mengenai kebijakan privasi, hubungi kami:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Email: <a href="mailto:bagustrialahmadi27@gmail.com" class="text-blue-600 hover:underline">bagustrialahmadi27@gmail.com</a></li>
+                <li>WhatsApp: <a href="https://wa.me/6283111481327" class="text-blue-600 hover:underline">083111481327</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

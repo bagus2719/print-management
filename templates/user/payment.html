@@ -1,155 +1,223 @@
 {% extends 'layouts/app.html' %}
 {% block title %}Pembayaran{% endblock %}
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <div class="clay-card overflow-hidden animate-slide-up">
-        <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-8 py-6">
-            <h3 class="text-2xl font-black text-white flex items-center gap-4">
-                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                    <i class="fas fa-credit-card text-white text-xl"></i>
-                </div>
+<div class="max-w-4xl mx-auto">
+    <!-- Job Summary Card -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden animate-slide-up mb-6">
+        <div class="bg-blue-800 px-6 py-5">
+            <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-credit-card text-blue-300"></i>
                 Pembayaran
             </h3>
         </div>
-        <div class="p-8">
-            <!-- Job Summary -->
-            <div class="clay-card-inset p-5 mb-8">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-base font-bold text-gray-700"><i class="far fa-file-pdf text-red-400 mr-2 text-lg"></i>{{ job.display_name }}</p>
-                        <p class="text-sm text-gray-400 mt-1">{{ job.pages }} halaman × {{ job.copies }} kopi</p>
+        <div class="p-6">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <i class="far fa-file-pdf text-blue-700 dark:text-blue-400 text-2xl"></i>
+                </div>
+                <div class="flex-1 min-w-0 text-center sm:text-left">
+                    <p class="text-lg font-black text-gray-800 dark:text-white truncate">{{ job.display_name }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ job.pages }} hlm × {{ job.copies }} kopi • {{ job.paper_size }} • {% if job.color_mode == 'color' %}Warna{% else %}B&W{% endif %}</p>
+                </div>
+                <div class="text-center sm:text-right flex-shrink-0 bg-blue-50 dark:bg-slate-800 px-5 py-3 rounded-xl border border-blue-100 dark:border-slate-700">
+                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Total Bayar</p>
+                    <p class="text-2xl font-black text-blue-700 dark:text-blue-400">Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Method Tabs -->
+    <div class="flex gap-2 mb-6 p-1.5 bg-gray-100 dark:bg-slate-800 rounded-2xl">
+        <button id="tab-transfer" onclick="switchTab('transfer')" class="flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm">
+            <i class="fas fa-university"></i> Transfer / E-Wallet
+        </button>
+        <button id="tab-cash" onclick="switchTab('cash')" class="flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+            <i class="fas fa-money-bill-wave"></i> Bayar Tunai
+        </button>
+    </div>
+
+    <!-- Transfer / E-Wallet Panel -->
+    <div id="panel-transfer" class="space-y-6 animate-fade-in">
+        <form action="{{ url_for('main.payment_transfer', job_id=job.id) }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="method" id="selected-method" value="">
+
+            <!-- Selectable Account Cards -->
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Pilih Metode Pembayaran</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {% for acc in accounts %}
+                {% set method_icons = {'bca': 'fa-building-columns', 'dana': 'fa-wallet', 'shopeepay': 'fa-shopping-bag', 'qris': 'fa-qrcode'} %}
+                {% set method_colors = {'bca': 'blue', 'dana': 'blue', 'shopeepay': 'orange', 'qris': 'purple'} %}
+                {% set mc = method_colors.get(acc.method, 'gray') %}
+                <div class="payment-card cursor-pointer bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200"
+                     data-method="{{ acc.method }}" onclick="selectMethod(this, '{{ acc.method }}')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-9 h-9 bg-{{ mc }}-100 dark:bg-{{ mc }}-900/30 rounded-xl flex items-center justify-center">
+                                <i class="fas {{ method_icons.get(acc.method, 'fa-credit-card') }} text-{{ mc }}-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-black text-gray-800 dark:text-white uppercase">{{ acc.label }}</p>
+                                <p class="text-[10px] text-gray-400">{{ acc.method|upper }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% if acc.qr_filename %}
+                            <button type="button" onclick="event.stopPropagation(); showQR('{{ url_for('main.view_qris_image', filename=acc.qr_filename) }}')" class="text-{{ mc }}-600 hover:text-{{ mc }}-700 text-xs font-bold flex items-center gap-1 bg-{{ mc }}-50 dark:bg-{{ mc }}-900/20 px-2 py-1 rounded-lg">
+                                <i class="fas fa-qrcode"></i> QR
+                            </button>
+                            {% endif %}
+                            <div class="check-icon hidden w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-400">Total Biaya</p>
-                        <p class="text-2xl font-black text-emerald-600">Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}</p>
+                    <div class="flex items-center justify-between gap-2 bg-gray-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700 mb-2">
+                        <span class="text-lg font-black text-gray-800 dark:text-white font-mono tracking-wide">{{ acc.account_number }}</span>
+                        <button type="button" onclick="event.stopPropagation(); copyToClipboard('{{ acc.account_number }}', this)" class="text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 p-2 rounded-lg transition" title="Salin">
+                            <i class="far fa-copy"></i>
+                        </button>
                     </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">a.n <span class="font-bold text-gray-700 dark:text-gray-200">{{ acc.account_name }}</span></p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Upload Proof (Opsional) -->
+            <div class="mb-6">
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Bukti Transfer (Opsional)</label>
+                <div class="relative group">
+                    <input type="file" name="proof_file" accept="image/*" id="proof-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewFile(this)">
+                    <div id="upload-placeholder" class="bg-white dark:bg-slate-900 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl py-8 flex flex-col items-center gap-2 group-hover:bg-blue-50/50 dark:group-hover:bg-slate-800 transition">
+                        <i class="fas fa-image text-gray-300 dark:text-slate-600 text-3xl"></i>
+                        <p class="text-sm font-bold text-gray-500 dark:text-gray-400">Klik untuk upload bukti (opsional)</p>
+                        <p class="text-[11px] text-gray-400">Bisa kirim bukti via WhatsApp juga</p>
+                    </div>
+                    <img id="upload-preview" class="hidden w-full max-h-64 object-contain rounded-2xl border-2 border-blue-500 shadow-lg bg-gray-50 dark:bg-slate-800 p-2">
                 </div>
             </div>
 
-            <form method="POST" action="{{ url_for('main.payment', job_id=job.id) }}" enctype="multipart/form-data" class="space-y-7">
-                <!-- Payment Method -->
-                <div>
-                    <label class="block text-base font-black text-gray-700 mb-4"><i class="fas fa-wallet mr-2 text-indigo-500"></i>Pilih Metode Pembayaran</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-{% if accounts|length > 3 %}4{% else %}{{ accounts|length }}{% endif %} gap-4">
-                        {% for acc in accounts %}
-                        <label class="clay-card p-5 cursor-pointer hover:ring-2 hover:ring-indigo-400 transition relative payment-option" data-method="{{ acc.method }}" data-number="{{ acc.account_number }}" data-name="{{ acc.account_name }}" data-label="{{ acc.label }}" data-qr="{{ acc.qr_filename if acc.qr_filename else '' }}">
-                            <input type="radio" name="payment_method" value="{{ acc.method }}" class="sr-only" required>
-                            <div class="text-center">
-                                <div class="w-16 h-12 mx-auto bg-white rounded-xl flex items-center justify-center mb-3 shadow-sm p-2 border border-gray-100">
-                                    {% if acc.method == 'bca' %}<img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg" class="max-h-full max-w-full" alt="BCA">
-                                    {% elif acc.method == 'bni' %}<img src="https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg" class="max-h-full max-w-full" alt="BNI">
-                                    {% elif acc.method == 'bri' %}<img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/BRI_2020.svg" class="max-h-full max-w-full" alt="BRI">
-                                    {% elif acc.method == 'mandiri' %}<img src="https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg" class="max-h-full max-w-full" alt="Mandiri">
-                                    {% elif acc.method == 'dana' %}<img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" class="max-h-full max-w-full" alt="DANA">
-                                    {% elif acc.method == 'shopeepay' %}<img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Shopee_Pay_logo.svg" class="max-h-full max-w-full" alt="ShopeePay">
-                                    {% elif acc.method == 'gopay' %}<img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg" class="max-h-full max-w-full" alt="GoPay">
-                                    {% elif acc.method == 'ovo' %}<img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg" class="max-h-full max-w-full" alt="OVO">
-                                    {% elif acc.method == 'qris' %}<img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" class="max-h-full max-w-full" alt="QRIS">
-                                    {% else %}<span class="text-lg font-black text-gray-500">{{ acc.label[:4]|upper }}</span>{% endif %}
-                                </div>
-                                <p class="text-sm font-bold text-gray-700">{{ acc.label }}</p>
-                            </div>
-                            <div class="hidden check-mark absolute top-2 right-2">
-                                <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center shadow-md"><i class="fas fa-check text-white text-sm"></i></div>
-                            </div>
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
+            <!-- Submit -->
+            <button type="submit" id="btn-submit" disabled class="w-full py-4 rounded-2xl bg-blue-700 hover:bg-blue-800 disabled:bg-gray-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-black text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                <i class="fas fa-paper-plane"></i> Konfirmasi Pembayaran
+            </button>
+        </form>
+    </div>
 
-                <!-- Payment Info -->
-                <div class="clay-card-inset p-6 hidden" id="payment-info">
-                    <p class="text-sm font-black text-gray-500 uppercase tracking-wider mb-2">Transfer ke Rekening / Akun Berikut</p>
-                    <p class="text-base font-bold text-gray-800" id="info-label"></p>
-                    
-                    <div id="text-info-container">
-                        <p class="text-2xl font-black text-indigo-600 mt-1 tracking-wider" id="info-number"></p>
-                        <p class="text-base text-gray-500" id="info-name"></p>
-                    </div>
-                    
-                    <div id="qr-info-container" class="hidden mt-4 text-center">
-                        <img id="qr-image" src="" alt="QR Code" class="mx-auto rounded-2xl shadow-lg border-4 border-white max-w-[200px]">
-                        <p class="text-sm text-gray-500 mt-2">Silakan scan Barcode QRIS di atas</p>
-                    </div>
-                </div>
+    <!-- Cash Panel -->
+    <div id="panel-cash" class="hidden animate-fade-in">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div class="w-24 h-24 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
+                <i class="fas fa-money-bill-wave text-green-600 text-4xl"></i>
+            </div>
+            <h4 class="text-2xl font-black text-gray-800 dark:text-white mb-3">Bayar Cash</h4>
+            <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto leading-relaxed">
+                Silakan menghubungi admin di lokasi untuk konfirmasi pembayaran sebesar:
+            </p>
+            
+            <div class="inline-block bg-green-50 dark:bg-green-900/20 px-8 py-4 rounded-2xl border border-green-100 dark:border-green-900/50 mb-8">
+                <p class="text-3xl font-black text-green-600">Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}</p>
+            </div>
 
-                <!-- Account Name -->
-                <div>
-                    <label for="account_name" class="block text-base font-bold text-gray-700 mb-2">Nama Pengirim</label>
-                    <input id="account_name" name="account_name" type="text" required class="clay-input w-full px-5 py-3.5 text-base" placeholder="Nama di rekening/e-wallet Anda">
-                </div>
-
-                <!-- Proof Upload -->
-                <div>
-                    <label class="block text-base font-bold text-gray-700 mb-2"><i class="fas fa-camera mr-2 text-indigo-500"></i>Bukti Transfer (Screenshot)</label>
-                    <div class="clay-card-inset p-6 text-center cursor-pointer hover:bg-indigo-50/30 transition group relative" id="proof-drop-zone">
-                        <input type="file" name="proof_file" id="proof_file" accept="image/*" required class="sr-only">
-                        <div id="proof-placeholder">
-                            <div class="w-16 h-16 mx-auto bg-gradient-to-tr from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                                <i class="fas fa-image text-3xl text-indigo-500"></i>
-                            </div>
-                            <p class="text-base font-bold text-gray-600">Klik untuk upload bukti transfer</p>
-                            <p class="text-sm text-gray-400 mt-1">PNG, JPG, JPEG, WEBP</p>
-                        </div>
-                        <div id="proof-preview" class="hidden">
-                            <img id="proof-img" src="" alt="Preview" class="max-h-48 mx-auto rounded-xl shadow-lg">
-                            <p class="text-sm font-bold text-emerald-600 mt-3"><i class="fas fa-check-circle mr-1"></i> Gambar terpilih</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex gap-4 pt-3">
-                    <a href="{{ url_for('main.history') }}" class="clay-btn px-6 py-3.5 text-base font-bold text-gray-600 bg-gray-100 flex-1 text-center">Batal</a>
-                    <button type="submit" class="clay-btn px-6 py-3.5 text-base font-black text-white bg-gradient-to-r from-emerald-500 to-teal-500 flex-1">
-                        <i class="fas fa-paper-plane mr-2"></i> Kirim Pembayaran
-                    </button>
-                </div>
+            <form action="{{ url_for('main.payment_cash', job_id=job.id) }}" method="POST" class="max-w-xs mx-auto">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="w-full py-4 rounded-2xl bg-gray-800 dark:bg-slate-700 hover:bg-gray-900 dark:hover:bg-slate-600 text-white font-black transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-check-circle"></i> Bayar Cash
+                </button>
             </form>
+            <p class="text-xs text-gray-400 mt-4"><i class="fas fa-info-circle mr-1"></i> Admin akan mengkonfirmasi setelah uang diterima.</p>
         </div>
     </div>
+
+    <div class="mt-8 text-center">
+        <a href="{{ url_for('main.history') }}" class="text-sm font-bold text-gray-400 hover:text-blue-600 transition">
+            <i class="fas fa-arrow-left mr-1"></i> Kembali ke Riwayat
+        </a>
+    </div>
 </div>
-{% endblock %}
-{% block extra_js %}
+
+<!-- QR Modal -->
+<div id="qr-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="closeQR()">
+    <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-sm w-full relative shadow-2xl" onclick="event.stopPropagation()">
+        <button onclick="closeQR()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white transition p-1">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        <img id="qr-image" src="" alt="QR Code" class="w-full rounded-2xl">
+        <p class="text-center font-black text-gray-800 dark:text-white mt-4">Scan untuk Membayar</p>
+        <p class="text-center text-sm text-gray-400 mt-1">Rp {{ "{:,.0f}".format(job.total_cost)|replace(',', '.') }}</p>
+    </div>
+</div>
+
 <script>
-document.querySelectorAll('.payment-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-        document.querySelectorAll('.payment-option').forEach(o => {
-            o.classList.remove('ring-2','ring-indigo-400');
-            o.querySelector('.check-mark').classList.add('hidden');
-        });
-        opt.classList.add('ring-2','ring-indigo-400');
-        opt.querySelector('.check-mark').classList.remove('hidden');
-        
-        document.getElementById('payment-info').classList.remove('hidden');
-        document.getElementById('info-label').textContent = opt.dataset.label;
-        
-        const method = opt.dataset.method;
-        if(method === 'qris' && opt.dataset.qr) {
-            document.getElementById('text-info-container').classList.add('hidden');
-            document.getElementById('qr-info-container').classList.remove('hidden');
-            document.getElementById('qr-image').src = `/qris_image/${opt.dataset.qr}`;
-        } else {
-            document.getElementById('text-info-container').classList.remove('hidden');
-            document.getElementById('qr-info-container').classList.add('hidden');
-            document.getElementById('info-number').textContent = opt.dataset.number;
-            document.getElementById('info-name').textContent = 'a.n. ' + opt.dataset.name;
-        }
+function selectMethod(card, method) {
+    // Reset all cards
+    document.querySelectorAll('.payment-card').forEach(c => {
+        c.classList.remove('border-blue-500', 'dark:border-blue-500', 'ring-2', 'ring-blue-200', 'dark:ring-blue-900', 'bg-blue-50/50', 'dark:bg-blue-950/20');
+        c.classList.add('border-gray-100', 'dark:border-slate-800');
+        c.querySelector('.check-icon').classList.add('hidden');
     });
-});
-const dropZone = document.getElementById('proof-drop-zone');
-const fileInput = document.getElementById('proof_file');
-dropZone.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            document.getElementById('proof-img').src = ev.target.result;
-            document.getElementById('proof-placeholder').classList.add('hidden');
-            document.getElementById('proof-preview').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
+    // Highlight selected
+    card.classList.remove('border-gray-100', 'dark:border-slate-800');
+    card.classList.add('border-blue-500', 'dark:border-blue-500', 'ring-2', 'ring-blue-200', 'dark:ring-blue-900', 'bg-blue-50/50', 'dark:bg-blue-950/20');
+    card.querySelector('.check-icon').classList.remove('hidden');
+    // Set hidden input & enable button
+    document.getElementById('selected-method').value = method;
+    document.getElementById('btn-submit').disabled = false;
+}
+
+function switchTab(tab) {
+    const btnTransfer = document.getElementById('tab-transfer');
+    const btnCash = document.getElementById('tab-cash');
+    const pnlTransfer = document.getElementById('panel-transfer');
+    const pnlCash = document.getElementById('panel-cash');
+
+    if (tab === 'transfer') {
+        btnTransfer.className = 'flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm';
+        btnCash.className = 'flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300';
+        pnlTransfer.classList.remove('hidden');
+        pnlCash.classList.add('hidden');
+    } else {
+        btnCash.className = 'flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm';
+        btnTransfer.className = 'flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300';
+        pnlCash.classList.remove('hidden');
+        pnlTransfer.classList.add('hidden');
     }
-});
+}
+
+function previewFile(input) {
+    const preview = document.getElementById('upload-preview');
+    const placeholder = document.getElementById('upload-placeholder');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function copyToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const icon = btn.querySelector('i');
+        icon.className = 'fas fa-check text-green-500';
+        setTimeout(() => { icon.className = 'far fa-copy'; }, 2000);
+    });
+}
+
+function showQR(src) {
+    document.getElementById('qr-image').src = src;
+    const modal = document.getElementById('qr-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeQR() {
+    const modal = document.getElementById('qr-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
 </script>
 {% endblock %}

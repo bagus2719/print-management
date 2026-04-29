@@ -1,0 +1,74 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Kebijakan Pengembalian Dana{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-slide-up">
+        <div class="bg-blue-800 px-8 py-6">
+            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-undo-alt text-blue-300"></i>
+                Kebijakan Pengembalian Dana (Refund Policy)
+            </h1>
+        </div>
+        <div class="p-8 prose prose-sm max-w-none text-gray-700 space-y-6">
+            <p class="text-sm text-gray-500">Terakhir diperbarui: 28 April 2026</p>
+
+            <h2 class="text-lg font-bold text-gray-800 mt-6">1. Ketentuan Umum</h2>
+            <p>PrintManager berkomitmen untuk memberikan hasil cetak yang berkualitas. Jika terjadi masalah, kami menyediakan kebijakan pengembalian dana sebagai berikut:</p>
+
+            <h2 class="text-lg font-bold text-gray-800">2. Kondisi yang Memenuhi Syarat Refund</h2>
+            <div class="bg-green-50 border border-green-100 rounded-xl p-4">
+                <p class="text-sm font-semibold text-green-800 mb-3"><i class="fas fa-check-circle mr-2"></i>Refund dapat dilakukan jika:</p>
+                <ul class="list-disc pl-5 space-y-2 text-sm">
+                    <li><strong>Hasil cetak rusak atau cacat:</strong> Terdapat kerusakan yang disebabkan oleh kesalahan mesin cetak kami (tinta bergaris, halaman kosong, kertas kusut akibat mesin).</li>
+                    <li><strong>Pesanan tidak sesuai:</strong> Hasil cetak tidak sesuai dengan konfigurasi yang dipilih (misalnya memesan warna tetapi dicetak hitam putih, atau ukuran kertas salah).</li>
+                    <li><strong>Pembatalan sebelum cetak:</strong> Pesanan dibatalkan sebelum proses pencetakan dimulai (status masih "Pending").</li>
+                    <li><strong>Halaman hilang:</strong> Jumlah halaman yang dicetak kurang dari yang seharusnya.</li>
+                </ul>
+            </div>
+
+            <h2 class="text-lg font-bold text-gray-800">3. Kondisi yang Tidak Memenuhi Syarat Refund</h2>
+            <div class="bg-red-50 border border-red-100 rounded-xl p-4">
+                <p class="text-sm font-semibold text-red-800 mb-3"><i class="fas fa-times-circle mr-2"></i>Refund tidak dapat dilakukan jika:</p>
+                <ul class="list-disc pl-5 space-y-2 text-sm">
+                    <li>Kesalahan berasal dari file yang diunggah oleh pengguna (file rusak, resolusi rendah, format tidak sesuai).</li>
+                    <li>Pengguna salah memilih konfigurasi cetak (jumlah kopi, warna, ukuran kertas).</li>
+                    <li>Pesanan sudah selesai dicetak dan diambil oleh pengguna tanpa klaim kerusakan saat pengambilan.</li>
+                    <li>Klaim diajukan lebih dari <strong>24 jam</strong> setelah pesanan diambil.</li>
+                </ul>
+            </div>
+
+            <h2 class="text-lg font-bold text-gray-800">4. Proses Pengajuan Refund</h2>
+            <ol class="list-decimal pl-5 space-y-3">
+                <li>
+                    <strong>Hubungi kami</strong> melalui WhatsApp di <a href="https://wa.me/6283111481327" class="text-blue-600 hover:underline">083111481327</a> atau email ke <a href="mailto:bagustrialahmadi27@gmail.com" class="text-blue-600 hover:underline">bagustrialahmadi27@gmail.com</a> dengan menyertakan:
+                    <ul class="list-disc pl-5 mt-2 space-y-1 text-sm">
+                        <li>Username akun PrintManager Anda</li>
+                        <li>Nomor / detail pesanan</li>
+                        <li>Foto bukti kerusakan hasil cetak (jika ada)</li>
+                        <li>Penjelasan singkat masalah yang dialami</li>
+                    </ul>
+                </li>
+                <li><strong>Tim kami akan meninjau</strong> pengajuan dalam waktu <strong>1×24 jam</strong> kerja.</li>
+                <li><strong>Keputusan refund</strong> akan diinformasikan melalui WhatsApp atau email.</li>
+            </ol>
+
+            <h2 class="text-lg font-bold text-gray-800">5. Metode Pengembalian Dana</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>Refund akan dikembalikan melalui metode pembayaran yang sama dengan yang digunakan saat transaksi.</li>
+                <li>Untuk pembayaran melalui Midtrans (Bank Transfer, QRIS, E-Wallet), proses refund memerlukan waktu <strong>3-7 hari kerja</strong>.</li>
+                <li>Untuk pembayaran cash, pengembalian dilakukan secara tunai langsung.</li>
+            </ul>
+
+            <h2 class="text-lg font-bold text-gray-800">6. Opsi Cetak Ulang</h2>
+            <p>Sebagai alternatif refund, kami juga menawarkan opsi <strong>cetak ulang gratis</strong> jika kerusakan terbukti disebabkan oleh kesalahan kami. Pengguna dapat memilih antara refund atau cetak ulang.</p>
+
+            <h2 class="text-lg font-bold text-gray-800">7. Kontak</h2>
+            <p>Untuk pengajuan refund atau pertanyaan lebih lanjut:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Email: <a href="mailto:bagustrialahmadi27@gmail.com" class="text-blue-600 hover:underline">bagustrialahmadi27@gmail.com</a></li>
+                <li>WhatsApp: <a href="https://wa.me/6283111481327" class="text-blue-600 hover:underline">083111481327</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 from app import create_app
 from extensions import db
-from models import User, Payment, PaymentAccount
+from models import User, Payment, PaymentAccount, PrintPricing
 
 app = create_app()
 
@@ -11,14 +11,25 @@ with app.app_context():
     db.create_all()
 
     print("Membuat user admin...")
-    admin = User(username='admin', email='admin@gmail.com', is_admin=True)
+    admin = User(username='admin', is_admin=True)
     admin.set_password('admin123')
     db.session.add(admin)
 
     print("Membuat user biasa...")
-    user = User(username='bagus', email='bagustrialahmadi27@gmail.com')
+    user = User(username='bagus')
     user.set_password('bagus123')
     db.session.add(user)
+
+    print("Membuat pengaturan harga cetak...")
+    pricing_config = [
+        PrintPricing(setting_key='A4_BW', setting_name='A4 Hitam Putih (Dasar)', price=250.0, description='Harga dasar per halaman untuk A4 B&W'),
+        PrintPricing(setting_key='A4_COLOR', setting_name='A4 Warna (Dasar)', price=300.0, description='Harga dasar per halaman untuk A4 Warna'),
+        PrintPricing(setting_key='DISCOUNT_SELF', setting_name='Diskon Bawa Kertas', price=150.0, description='Potongan harga jika bawa kertas sendiri'),
+        PrintPricing(setting_key='MULT_A4', setting_name='Pengali Ukuran A4', price=1.0, description='Faktor pengali untuk ukuran A4'),
+        PrintPricing(setting_key='MULT_F4', setting_name='Pengali Ukuran F4', price=1.0, description='Faktor pengali untuk ukuran F4'),
+        PrintPricing(setting_key='MULT_A3', setting_name='Pengali Ukuran A3', price=2.0, description='Faktor pengali untuk ukuran A3')
+    ]
+    db.session.add_all(pricing_config)
 
     print("Membuat akun pembayaran default...")
     accounts = [
@@ -31,5 +42,4 @@ with app.app_context():
     
     db.session.commit()
     print("User 'admin' (pass: admin123) dan 'bagus' (pass: bagus123) berhasil dibuat.")
-    print("3 akun pembayaran default berhasil dibuat (BCA, DANA, ShopeePay).")
     print("Inisialisasi database selesai.")

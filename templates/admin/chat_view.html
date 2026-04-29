@@ -1,0 +1,94 @@
+{% extends 'layouts/app.html' %}
+{% block title %}Chat with {{ target_user.username }}{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row gap-6 h-[700px]">
+        <!-- Sidebar: Hidden on Mobile if viewing chat -->
+        <div class="hidden md:block w-80 space-y-4">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden h-full flex flex-col">
+                <div class="p-5 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                    <h3 class="text-sm font-black text-gray-800 dark:text-white uppercase tracking-widest">Percakapan</h3>
+                    <a href="{{ url_for('admin.manage_chats') }}" class="text-blue-600 hover:text-blue-700"><i class="fas fa-sync-alt"></i></a>
+                </div>
+                <div class="flex-1 overflow-y-auto divide-y divide-gray-50 dark:divide-slate-800">
+                    <!-- User info can go here -->
+                    <div class="p-5 bg-blue-50 dark:bg-slate-800/50">
+                        <div class="w-16 h-16 bg-blue-700 rounded-2xl flex items-center justify-center text-white font-black text-2xl mx-auto mb-3 shadow-lg">
+                            {{ target_user.username[0]|upper }}
+                        </div>
+                        <h4 class="text-center font-black text-gray-800 dark:text-white">{{ target_user.username }}</h4>
+                        <p class="text-center text-[10px] text-gray-400 mt-1 uppercase tracking-widest">Customer</p>
+                        
+                        <div class="mt-6 space-y-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-gray-400">Terdaftar</span>
+                                <span class="font-bold text-gray-700 dark:text-gray-300">{{ target_user.created_at.strftime('%d %b %Y') }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-gray-400">Total Order</span>
+                                <span class="font-bold text-gray-700 dark:text-gray-300">{{ target_user.jobs.count() }}</span>
+                            </div>
+                        </div>
+                        
+                        <a href="{{ url_for('admin.manage_jobs', user_id=target_user.id) }}" class="mt-6 block w-full py-2.5 rounded-xl bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-center text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600 transition">Lihat Pesanan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Area: Chat Window -->
+        <div class="flex-1 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden animate-fade-in">
+            <!-- Header -->
+            <div class="p-4 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('admin.manage_chats') }}" class="md:hidden text-gray-400 p-2"><i class="fas fa-arrow-left"></i></a>
+                    <div class="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white font-black text-xs">
+                        {{ target_user.username[0]|upper }}
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-800 dark:text-white">{{ target_user.username }}</h3>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Sedang Membalas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Container -->
+            <div id="admin-chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30 dark:bg-slate-900/50">
+                {% for m in messages %}
+                <div class="flex {{ 'justify-end' if m.is_from_admin else 'justify-start' }}">
+                    <div class="max-w-[70%] group">
+                        <div class="px-4 py-2.5 rounded-2xl text-base {{ 'bg-blue-800 text-white rounded-tr-none' if m.is_from_admin else 'bg-white dark:bg-slate-800 text-gray-800 dark:text-white rounded-tl-none shadow-sm' }}">
+                            <p>{{ m.message }}</p>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1 {{ 'text-right' if m.is_from_admin else 'text-left' }}">{{ m.timestamp.strftime('%H:%M') }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Input -->
+            <form action="{{ url_for('admin.chat_reply', user_id=target_user.id) }}" method="POST" class="p-4 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex gap-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="message" id="admin-chat-input" placeholder="Tulis balasan..." autofocus autocomplete="off" class="flex-1 bg-gray-50 dark:bg-slate-800 border-none rounded-xl px-5 py-3 text-base focus:ring-2 focus:ring-blue-500 transition">
+                <button type="submit" class="w-12 h-12 bg-blue-700 text-white rounded-xl flex items-center justify-center hover:bg-blue-800 shadow-lg transition">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Scroll to bottom on load
+    const msgContainer = document.getElementById('admin-chat-messages');
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+    
+    // Simple auto-reload for admin every 10 seconds to check for new messages
+    setTimeout(() => {
+        location.reload();
+    }, 10000);
+</script>
+{% endblock %}

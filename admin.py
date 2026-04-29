@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import time
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from functools import wraps
-from models import PrintJob, User, Payment, PaymentAccount
+from models import PrintJob, User, Payment, PaymentAccount, ChatMessage
 from extensions import db
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -200,6 +200,39 @@ def reject_payment(payment_id):
     flash(f'Pembayaran #{payment.id} ditolak.', 'warning')
     return redirect(url_for('admin.manage_payments'))
 
+@bp.route('/jobs/set_payment/<int:job_id>/<new_status>', methods=['POST'])
+@login_required
+@admin_required
+def set_payment_status(job_id, new_status):
+    """Admin mengatur status pembayaran secara manual (misal: bukti via WA)."""
+    job = PrintJob.query.get_or_404(job_id)
+    
+    if new_status == 'paid':
+        job.payment_status = 'paid'
+        # Jika belum ada payment record, buat secara manual
+        existing = Payment.query.filter_by(job_id=job.id).first()
+        if not existing:
+            manual_payment = Payment(
+                job_id=job.id,
+                user_id=job.user_id,
+                amount=job.total_cost,
+                method='manual',
+                status='confirmed',
+                confirmed_at=datetime.utcnow()
+            )
+            db.session.add(manual_payment)
+        else:
+            existing.status = 'confirmed'
+            existing.confirmed_at = datetime.utcnow()
+        flash(f'Pembayaran "{job.display_name}" ditandai LUNAS.', 'success')
+    elif new_status == 'unpaid':
+        job.payment_status = 'unpaid'
+        flash(f'Pembayaran "{job.display_name}" direset ke BELUM BAYAR.', 'info')
+    
+    db.session.commit()
+    return redirect(request.referrer or url_for('admin.manage_jobs'))
+
+
 # --- MANAGE PAYMENT ACCOUNTS ---
 @bp.route('/payment-accounts')
 @login_required
@@ -278,3 +311,53 @@ def delete_payment_account(acc_id):
     db.session.commit()
     flash(f'Akun "{acc.label}" berhasil dihapus.', 'success')
     return redirect(url_for('admin.manage_payment_accounts'))
+
+
+# --- MANAGE CHATS ---
+@bp.route('/chats')
+@login_required
+@admin_required
+def manage_chats():
+    # Cleanup old messages (> 7 days)
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    deleted_count = ChatMessage.query.filter(ChatMessage.timestamp < week_ago).delete()
+    if deleted_count > 0:
+        db.session.commit()
+        print(f"DEBUG: Deleted {deleted_count} old chat messages.")
+
+    # Find all users who have sent messages
+    subquery = db.session.query(
+        ChatMessage.user_id,
+        db.func.max(ChatMessage.timestamp).label('max_ts')
+    ).group_by(ChatMessage.user_id).subquery()
+    
+    users_with_chats = User.query.join(subquery, User.id == subquery.c.user_id).order_by(subquery.c.max_ts.desc()).all()
+    unread_counts = {u.id: ChatMessage.query.filter_by(user_id=u.id, is_from_admin=False, is_read=False).count() for u in users_with_chats}
+    
+    return render_template('admin/chats.html', users=users_with_chats, unread_counts=unread_counts)
+
+@bp.route('/chats/view/<int:user_id>')
+@login_required
+@admin_required
+def view_chat(user_id):
+    target_user = User.query.get_or_404(user_id)
+    messages = ChatMessage.query.filter_by(user_id=user_id).order_by(ChatMessage.timestamp.asc()).all()
+    
+    # Mark messages as read
+    unread = ChatMessage.query.filter_by(user_id=user_id, is_from_admin=False, is_read=False).all()
+    for m in unread:
+        m.is_read = True
+    db.session.commit()
+    
+    return render_template('admin/chat_view.html', target_user=target_user, messages=messages)
+
+@bp.route('/chats/reply/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def chat_reply(user_id):
+    msg_text = request.form.get('message', '').strip()
+    if msg_text:
+        new_msg = ChatMessage(user_id=user_id, message=msg_text, is_from_admin=True)
+        db.session.add(new_msg)
+        db.session.commit()
+    return redirect(url_for('admin.view_chat', user_id=user_id))

@@ -5,3 +5,7 @@ Flask-Migrate
 PyPDF2
 Werkzeug
 gunicorn
+midtransclient
+Flask-WTF
+python-dotenv
+Pillow

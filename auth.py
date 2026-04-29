@@ -11,23 +11,18 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 def register():
     if request.method == 'POST':
         username = request.form['username']
-        email = request.form['email']
         password = request.form['password']
         error = None
 
         if not username:
             error = 'Username wajib diisi.'
-        elif not email:
-            error = 'Email wajib diisi.'
         elif not password:
             error = 'Password wajib diisi.'
         elif User.query.filter_by(username=username).first() is not None:
             error = f"User {username} sudah terdaftar."
-        elif User.query.filter_by(email=email).first() is not None:
-            error = f"Email {email} sudah terdaftar."
 
         if error is None:
-            new_user = User(username=username, email=email)
+            new_user = User(username=username)
             new_user.set_password(password)
             db.session.add(new_user)
             db.session.commit()
@@ -61,60 +56,6 @@ def login():
         flash(error, 'danger')
         
     return render_template('auth/login.html')
-
-@bp.route('/forgot-password', methods=('GET', 'POST'))
-def forgot_password():
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        user = User.query.filter_by(email=email).first()
-        
-        if user:
-            token = user.generate_reset_token()
-            db.session.commit()
-            flash(f'Token reset berhasil dibuat. Gunakan token berikut untuk reset password: {token}', 'success')
-            return redirect(url_for('auth.reset_password', token=token))
-        else:
-            flash('Email tidak ditemukan dalam sistem.', 'danger')
-
-    return render_template('auth/forgot_password.html')
-
-@bp.route('/reset-password/<token>', methods=('GET', 'POST'))
-def reset_password(token):
-    user = User.query.filter_by(reset_token=token).first()
-    
-    if not user:
-        flash('Token reset tidak valid atau sudah kedaluwarsa.', 'danger')
-        return redirect(url_for('auth.forgot_password'))
-    
-    # Check if token is expired (30 minutes)
-    if user.reset_token_expiry:
-        expiry_time = user.reset_token_expiry + timedelta(minutes=30)
-        if datetime.utcnow() > expiry_time:
-            user.reset_token = None
-            user.reset_token_expiry = None
-            db.session.commit()
-            flash('Token reset sudah kedaluwarsa. Silakan minta token baru.', 'danger')
-            return redirect(url_for('auth.forgot_password'))
-    
-    if request.method == 'POST':
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        
-        if not password:
-            flash('Password baru wajib diisi.', 'danger')
-        elif password != confirm_password:
-            flash('Password dan konfirmasi password tidak cocok.', 'danger')
-        elif len(password) < 6:
-            flash('Password minimal 6 karakter.', 'danger')
-        else:
-            user.set_password(password)
-            user.reset_token = None
-            user.reset_token_expiry = None
-            db.session.commit()
-            flash('Password berhasil direset! Silakan login dengan password baru.', 'success')
-            return redirect(url_for('auth.login'))
-    
-    return render_template('auth/reset_password.html', token=token)
 
 @bp.route('/logout')
 @login_required

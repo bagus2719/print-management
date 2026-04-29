@@ -38,7 +38,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased h-screen flex overflow-hidden text-base">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased h-screen flex overflow-hidden text-[17px]">
     
     <!-- Sidebar -->
     <aside class="bg-dark text-white w-80 flex-shrink-0 hidden md:flex flex-col" id="sidebar">
@@ -71,6 +71,9 @@
                 </a>
                 <a href="{{ url_for('admin.manage_payment_accounts') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold gap-4 {% if current_page == 'admin.manage_payment_accounts' %}active{% else %}text-gray-300{% endif %}">
                     <i class="fas fa-university w-6 text-center text-lg {% if current_page != 'admin.manage_payment_accounts' %}text-gray-500{% endif %}"></i> Akun Pembayaran
+                </a>
+                <a href="{{ url_for('admin.manage_chats') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold gap-4 {% if current_page in ['admin.manage_chats', 'admin.view_chat'] %}active{% else %}text-gray-300{% endif %}">
+                    <i class="fas fa-comments w-6 text-center text-lg {% if current_page not in ['admin.manage_chats', 'admin.view_chat'] %}text-gray-500{% endif %}"></i> Live Chat
                 </a>
             </nav>
             <p class="text-xs font-black text-gray-500 uppercase tracking-widest mt-10 mb-4 px-3">Lainnya</p>
@@ -141,6 +144,7 @@
                 <a href="{{ url_for('admin.manage_users') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-users w-6 text-center text-lg text-gray-500"></i> Users</a>
                 <a href="{{ url_for('admin.manage_payments') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-credit-card w-6 text-center text-lg text-gray-500"></i> Pembayaran</a>
                 <a href="{{ url_for('admin.manage_payment_accounts') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-university w-6 text-center text-lg text-gray-500"></i> Akun Bayar</a>
+                <a href="{{ url_for('admin.manage_chats') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-comments w-6 text-center text-lg text-gray-500"></i> Live Chat</a>
                 <a href="{{ url_for('main.index') }}" class="sidebar-item flex items-center px-4 py-3 text-base font-bold text-gray-300 gap-4"><i class="fas fa-arrow-left w-6 text-center text-lg text-gray-500"></i> Kembali</a>
             </nav>
         </div>
