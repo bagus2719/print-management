@@ -64,7 +64,10 @@
                         </div>
                         <div class="flex items-center gap-2">
                             {% if acc.qr_filename %}
-                            <button type="button" onclick="event.stopPropagation(); showQR('{{ url_for('main.view_qris_image', filename=acc.qr_filename) }}')" class="text-{{ mc }}-600 hover:text-{{ mc }}-700 text-xs font-bold flex items-center gap-1 bg-{{ mc }}-50 dark:bg-{{ mc }}-900/20 px-2 py-1 rounded-lg">
+                            <button type="button" 
+                                    onclick="event.stopPropagation(); showQR(this.dataset.url)" 
+                                    data-url="{{ url_for('main.view_qris_image', filename=acc.qr_filename) }}"
+                                    class="text-{{ mc }}-600 hover:text-{{ mc }}-700 text-xs font-bold flex items-center gap-1 bg-{{ mc }}-50 dark:bg-{{ mc }}-900/20 px-2 py-1 rounded-lg">
                                 <i class="fas fa-qrcode"></i> QR
                             </button>
                             {% endif %}
@@ -75,7 +78,10 @@
                     </div>
                     <div class="flex items-center justify-between gap-2 bg-gray-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700 mb-2">
                         <span class="text-lg font-black text-gray-800 dark:text-white font-mono tracking-wide">{{ acc.account_number }}</span>
-                        <button type="button" onclick="event.stopPropagation(); copyToClipboard('{{ acc.account_number }}', this)" class="text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 p-2 rounded-lg transition" title="Salin">
+                        <button type="button" 
+                                onclick="event.stopPropagation(); copyToClipboard(this.dataset.account, this)" 
+                                data-account="{{ acc.account_number }}"
+                                class="text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 p-2 rounded-lg transition" title="Salin">
                             <i class="far fa-copy"></i>
                         </button>
                     </div>
