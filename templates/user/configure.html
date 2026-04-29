@@ -33,13 +33,26 @@
                 <div class="job-item border border-gray-200 rounded-xl p-5 hover:border-blue-300 transition-colors" data-pages="{{ file.pages }}">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
                         <div class="flex items-center gap-3">
+                            {% set ext = file.ext|default(file.filename.rsplit('.', 1)[1]|lower) %}
+                            {% if ext == 'pdf' %}
                             <i class="far fa-file-pdf text-red-500 text-xl"></i>
+                            {% elif ext in ['doc', 'docx'] %}
+                            <i class="far fa-file-word text-blue-600 text-xl"></i>
+                            {% elif ext in ['ppt', 'pptx'] %}
+                            <i class="far fa-file-powerpoint text-orange-500 text-xl"></i>
+                            {% elif ext in ['xls', 'xlsx'] %}
+                            <i class="far fa-file-excel text-green-600 text-xl"></i>
+                            {% elif ext in ['png', 'jpg', 'jpeg', 'webp'] %}
+                            <i class="far fa-file-image text-purple-500 text-xl"></i>
+                            {% else %}
+                            <i class="far fa-file text-gray-500 text-xl"></i>
+                            {% endif %}
                             <div>
                                 <p class="text-base font-bold text-gray-800">{{ file.display_name }}</p>
                                 <div class="flex items-center gap-2 mt-1">
                                     <input type="number" name="pages_{{ loop.index0 }}" class="page-input w-16 px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 outline-none" value="{{ file.pages }}" min="1" required>
                                     <span class="text-xs text-gray-500">Halaman</span>
-                                    {% if file.filename.endswith('.doc') or file.filename.endswith('.docx') %}
+                                    {% if ext in ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'] %}
                                     <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">Cek ulang jml. halaman</span>
                                     {% endif %}
                                 </div>

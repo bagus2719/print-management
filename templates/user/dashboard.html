@@ -31,21 +31,21 @@
                     </div>
                     <div>
                         <h3 class="text-xl font-black text-gray-800">Upload File Baru</h3>
-                        <p class="text-sm text-gray-500">Upload satu atau beberapa file PDF / gambar untuk dicetak.</p>
+                        <p class="text-sm text-gray-500">Upload satu atau beberapa file untuk dicetak.</p>
                     </div>
                 </div>
                 <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:bg-blue-100/60 transition group mb-4" onclick="document.getElementById('files').click()">
                         <div class="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
-                            <i class="fas fa-file-pdf text-2xl text-blue-700"></i>
+                            <i class="fas fa-file-alt text-2xl text-blue-700"></i>
                         </div>
                         <div class="min-w-0 flex-1">
                             <p class="text-base font-bold text-gray-700 custom-file-label-text">Klik untuk pilih file</p>
-                            <p class="text-xs text-gray-500 mt-0.5">PDF, Word, atau Gambar — Bisa pilih lebih dari satu file</p>
+                            <p class="text-xs text-gray-500 mt-0.5">PDF, Word, PPT, Excel, atau Gambar</p>
                         </div>
                         <i class="fas fa-chevron-right text-gray-300 group-hover:text-blue-500 transition"></i>
-                        <input id="files" name="files" type="file" class="sr-only" required multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp">
+                        <input id="files" name="files" type="file" class="sr-only" required multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp">
                     </div>
                     <button type="submit" class="w-full py-4 text-base font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
                         Lanjutkan ke Konfigurasi <i class="fas fa-arrow-right"></i>

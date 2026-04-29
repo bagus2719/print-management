@@ -20,7 +20,7 @@ class Config:
     # Uploads
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload size
-    ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'webp', 'doc', 'docx'}
+    ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'webp', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'}
 
     # Midtrans Keys
     MIDTRANS_MERCHANT_ID = os.environ.get('MIDTRANS_MERCHANT_ID')

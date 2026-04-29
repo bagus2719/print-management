@@ -15,6 +15,7 @@ from PIL import Image
 bp = Blueprint('main', __name__)
 
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
+DOCUMENT_EXTENSIONS = {'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
@@ -91,16 +92,19 @@ def index():
                         with open(filepath, 'rb') as f:
                             reader = PyPDF2.PdfReader(f)
                             num_pages = len(reader.pages)
+                    elif ext in DOCUMENT_EXTENSIONS:
+                        # Word, PowerPoint, Excel - default to 1 page
+                        # User can edit page count on configure page
+                        num_pages = 1
                     else:
-                        # Word or other documents (doc, docx)
-                        # Default to 1 page as counting pages in Word is complex without heavy libraries
                         num_pages = 1
                     
                     files_for_configuration.append({
                         'filename': unique_filename,
                         'display_name': original_filename,
                         'filepath': filepath,
-                        'pages': num_pages
+                        'pages': num_pages,
+                        'ext': ext
                     })
                 except Exception as e:
                     flash(f'Gagal memproses file "{original_filename}": format file mungkin rusak.', 'danger')
@@ -113,7 +117,7 @@ def index():
             session['files_to_configure'] = files_for_configuration
             return redirect(url_for('main.configure_jobs'))
         else:
-            flash('Tidak ada file PDF valid yang berhasil diupload.', 'danger')
+            flash('Tidak ada file valid yang berhasil diupload.', 'danger')
             return redirect(request.url)
 
     recent_jobs = PrintJob.query.filter_by(user_id=current_user.id).order_by(PrintJob.upload_time.desc()).limit(5).all()
