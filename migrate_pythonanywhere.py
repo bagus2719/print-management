@@ -8,21 +8,21 @@ import os
 db_path = 'instance/print_jobs.db'
 
 def migrate():
-    if not os.path.exists(db_path):
-        # Coba path alternatif jika instance tidak ditemukan
+    # Gunakan local variable untuk pengecekan path
+    target_db = 'instance/print_jobs.db'
+    
+    if not os.path.exists(target_db):
         alt_path = 'db_pythonanywhere/print_jobs.db'
         if os.path.exists(alt_path):
-            global db_path
-            db_path = alt_path
+            target_db = alt_path
         else:
             print(f"File database tidak ditemukan di 'instance/print_jobs.db' maupun '{alt_path}'!")
-            print("Pastikan nama file database Anda benar.")
             return
 
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(target_db)
     cursor = conn.cursor()
 
-    print("Memulai migrasi database PythonAnywhere...")
+    print(f"Memulai migrasi database: {target_db}...")
 
     # 1. Tambah kolom ke tabel payment
     columns_to_add = [
