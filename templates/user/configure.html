@@ -36,7 +36,13 @@
                             <i class="far fa-file-pdf text-red-500 text-xl"></i>
                             <div>
                                 <p class="text-base font-bold text-gray-800">{{ file.display_name }}</p>
-                                <p class="text-sm text-gray-500">{{ file.pages }} Halaman</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <input type="number" name="pages_{{ loop.index0 }}" class="page-input w-16 px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 outline-none" value="{{ file.pages }}" min="1" required>
+                                    <span class="text-xs text-gray-500">Halaman</span>
+                                    {% if file.filename.endswith('.doc') or file.filename.endswith('.docx') %}
+                                    <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">Cek ulang jml. halaman</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
@@ -151,7 +157,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let total = 0;
         
         document.querySelectorAll('.job-item').forEach(r => {
-            const pages = parseInt(r.dataset.pages);
+            const pagesInput = r.querySelector('.page-input');
+            const pages = parseInt(pagesInput.value) || 0;
             const copies = parseInt(r.querySelector('.copy-input').value) || 0;
             const color = r.querySelector('.color-input').value;
             const size = r.querySelector('.size-input').value;
@@ -175,11 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Ensure price isn't negative
             if (pricePerPage < 0) pricePerPage = 0;
 
-            // Calculate pages charged (Duplex charges per side, but maybe slightly cheaper. For now, charge per side = same pages)
-            // Wait, if it's duplex, the customer saves PAPER. Since the price includes paper, if paper is from us, we should discount the saved paper.
-            // But to keep it simple and match standard copy shops:
-            // Let's just charge the calculated pricePerPage * pages * copies. Duplex is just an instruction for the operator.
-            
             total += pricePerPage * pages * copies;
         });
         
@@ -187,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Attach listeners
-    document.querySelectorAll('.copy-input, .color-input, .size-input, .duplex-input').forEach(i => i.addEventListener('input', calc));
+    document.querySelectorAll('.copy-input, .color-input, .size-input, .duplex-input, .page-input').forEach(i => i.addEventListener('input', calc));
     document.querySelectorAll('.paper-source-input').forEach(i => i.addEventListener('change', calc));
     
     // Initial calc

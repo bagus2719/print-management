@@ -80,16 +80,21 @@ def index():
                 file.save(filepath)
                 try:
                     num_pages = 1
-                    if allowed_image(unique_filename):
+                    ext = unique_filename.rsplit('.', 1)[1].lower()
+                    if ext in ALLOWED_IMAGE_EXTENSIONS:
                         # Use PIL to verify it's a valid image
                         with Image.open(filepath) as img:
                             img.verify()
                         num_pages = 1
-                    else:
+                    elif ext == 'pdf':
                         # It's a PDF
                         with open(filepath, 'rb') as f:
                             reader = PyPDF2.PdfReader(f)
                             num_pages = len(reader.pages)
+                    else:
+                        # Word or other documents (doc, docx)
+                        # Default to 1 page as counting pages in Word is complex without heavy libraries
+                        num_pages = 1
                     
                     files_for_configuration.append({
                         'filename': unique_filename,
@@ -102,7 +107,7 @@ def index():
                     if os.path.exists(filepath):
                         os.remove(filepath)
             else:
-                flash(f'File "{file.filename}" memiliki format yang tidak didukung. Harap upload PDF.', 'warning')
+                flash(f'File "{file.filename}" memiliki format yang tidak didukung. Harap upload PDF, Word, atau Gambar.', 'warning')
 
         if files_for_configuration:
             session['files_to_configure'] = files_for_configuration
@@ -126,18 +131,19 @@ def configure_jobs():
         paper_source = request.form.get('paper_source', 'dari_kami')
         
         for i, file_details in enumerate(files):
+            pages = int(request.form.get(f'pages_{i}', file_details['pages']))
             copies = int(request.form.get(f'copies_{i}', 1))
             color_mode = request.form.get(f'color_{i}', 'bw')
             paper_size = request.form.get(f'size_{i}', 'A4')
             is_duplex = request.form.get(f'duplex_{i}', '0') == '1'
 
             if copies > 0:
-                cost = calculate_cost(pages=file_details['pages'], copies=copies, color_mode=color_mode, paper_size=paper_size, paper_source=paper_source)
+                cost = calculate_cost(pages=pages, copies=copies, color_mode=color_mode, paper_size=paper_size, paper_source=paper_source)
                 new_job = PrintJob(
                     filename=file_details['filename'],
                     display_name=file_details['display_name'],
                     filepath=file_details['filepath'],
-                    pages=file_details['pages'],
+                    pages=pages,
                     copies=copies,
                     color_mode=color_mode,
                     paper_size=paper_size,
