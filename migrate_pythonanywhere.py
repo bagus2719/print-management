@@ -3,13 +3,21 @@ import os
 
 # Path database di PythonAnywhere biasanya di 'db_pythonanywhere/print_jobs.db'
 # Sesuaikan jika path Anda berbeda
-db_path = 'db_pythonanywhere/print_jobs.db'
+# Path database di PythonAnywhere
+# User menyebutkan database ada di folder 'instance'
+db_path = 'instance/print_jobs.db'
 
 def migrate():
     if not os.path.exists(db_path):
-        print(f"File {db_path} tidak ditemukan!")
-        print("Pastikan Anda menjalankan script ini dari folder root project.")
-        return
+        # Coba path alternatif jika instance tidak ditemukan
+        alt_path = 'db_pythonanywhere/print_jobs.db'
+        if os.path.exists(alt_path):
+            global db_path
+            db_path = alt_path
+        else:
+            print(f"File database tidak ditemukan di 'instance/print_jobs.db' maupun '{alt_path}'!")
+            print("Pastikan nama file database Anda benar.")
+            return
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
