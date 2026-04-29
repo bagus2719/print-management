@@ -1,6 +1,8 @@
 import os
 import PyPDF2
 import time
+import zipfile
+import xml.etree.ElementTree as ET
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash, current_app, 
     send_from_directory, abort, session, jsonify
@@ -22,6 +24,43 @@ def allowed_file(filename):
 
 def allowed_image(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+
+def get_office_page_count(filepath, ext):
+    """Auto-detect page/slide count from Office Open XML files (.docx, .pptx, .xlsx).
+    Uses built-in zipfile + xml modules, no extra libraries needed.
+    Returns 1 as fallback if detection fails.
+    """
+    try:
+        if ext == 'docx':
+            # DOCX stores page count in docProps/app.xml
+            with zipfile.ZipFile(filepath, 'r') as z:
+                if 'docProps/app.xml' in z.namelist():
+                    with z.open('docProps/app.xml') as f:
+                        tree = ET.parse(f)
+                        root = tree.getroot()
+                        ns = '{http://schemas.openxmlformats.org/officeDocument/2006/extended-properties}'
+                        pages_el = root.find(f'{ns}Pages')
+                        if pages_el is not None and pages_el.text:
+                            return max(1, int(pages_el.text))
+        
+        elif ext == 'pptx':
+            # PPTX: count slide files inside ppt/slides/
+            with zipfile.ZipFile(filepath, 'r') as z:
+                slides = [n for n in z.namelist() if n.startswith('ppt/slides/slide') and n.endswith('.xml')]
+                if slides:
+                    return len(slides)
+        
+        elif ext == 'xlsx':
+            # XLSX: count worksheet files inside xl/worksheets/
+            with zipfile.ZipFile(filepath, 'r') as z:
+                sheets = [n for n in z.namelist() if n.startswith('xl/worksheets/sheet') and n.endswith('.xml')]
+                if sheets:
+                    return len(sheets)
+    except Exception:
+        pass
+    
+    # Fallback for old binary formats (.doc, .ppt, .xls) or if detection fails
+    return 1
 
 def calculate_cost(pages, copies, color_mode, paper_size, paper_source):
     # Dynamic pricing based on PrintPricing DB
@@ -93,9 +132,8 @@ def index():
                             reader = PyPDF2.PdfReader(f)
                             num_pages = len(reader.pages)
                     elif ext in DOCUMENT_EXTENSIONS:
-                        # Word, PowerPoint, Excel - default to 1 page
-                        # User can edit page count on configure page
-                        num_pages = 1
+                        # Auto-detect page/slide count from Office files
+                        num_pages = get_office_page_count(filepath, ext)
                     else:
                         num_pages = 1
                     
