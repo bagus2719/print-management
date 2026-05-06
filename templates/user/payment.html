@@ -46,13 +46,20 @@ block content %}
   </div>
 
   <!-- Payment Method Tabs -->
-  <div class="flex gap-2 mb-6 p-1.5 bg-gray-100 dark:bg-slate-800 rounded-2xl">
+  <div class="flex flex-col sm:flex-row gap-2 mb-6 p-1.5 bg-gray-100 dark:bg-slate-800 rounded-2xl">
+    <button
+      id="tab-midtrans"
+      onclick="switchTab('midtrans')"
+      class="flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm"
+    >
+      <i class="fas fa-bolt"></i> Otomatis (Midtrans)
+    </button>
     <button
       id="tab-transfer"
       onclick="switchTab('transfer')"
-      class="flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm"
+      class="flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
     >
-      <i class="fas fa-university"></i> Transfer / E-Wallet
+      <i class="fas fa-university"></i> Transfer Manual
     </button>
     <button
       id="tab-cash"
@@ -63,8 +70,37 @@ block content %}
     </button>
   </div>
 
+  <!-- Midtrans Panel -->
+  <div id="panel-midtrans" class="animate-fade-in">
+    <div
+      class="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center border border-gray-100 dark:border-slate-800 shadow-sm"
+    >
+      <div
+        class="w-24 h-24 mx-auto bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-6"
+      >
+        <i class="fas fa-bolt text-blue-600 text-4xl"></i>
+      </div>
+      <h4 class="text-2xl font-black text-gray-800 dark:text-white mb-3">
+        Bayar Otomatis
+      </h4>
+      <p
+        class="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto leading-relaxed"
+      >
+        Pembayaran instan dan diverifikasi otomatis oleh Midtrans (Menerima QRIS, GoPay, BCA, Mandiri, dll).
+      </p>
+
+      <button
+        onclick="payWithMidtrans()"
+        id="btn-midtrans"
+        class="w-full max-w-xs mx-auto py-4 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-black transition shadow-lg flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+      >
+        <i class="fas fa-lock"></i> Bayar Sekarang
+      </button>
+    </div>
+  </div>
+
   <!-- Transfer / E-Wallet Panel -->
-  <div id="panel-transfer" class="space-y-6 animate-fade-in">
+  <div id="panel-transfer" class="hidden space-y-6 animate-fade-in">
     <form
       action="{{ url_for('main.payment_transfer', job_id=job.id) }}"
       method="POST"
@@ -324,26 +360,64 @@ block content %}
   }
 
   function switchTab(tab) {
-    const btnTransfer = document.getElementById("tab-transfer");
-    const btnCash = document.getElementById("tab-cash");
-    const pnlTransfer = document.getElementById("panel-transfer");
-    const pnlCash = document.getElementById("panel-cash");
+    const tabs = ['midtrans', 'transfer', 'cash'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-${t}`);
+      const pnl = document.getElementById(`panel-${t}`);
+      if (t === tab) {
+        btn.className = "flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm";
+        pnl.classList.remove("hidden");
+      } else {
+        btn.className = "flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300";
+        pnl.classList.add("hidden");
+      }
+    });
+  }
 
-    if (tab === "transfer") {
-      btnTransfer.className =
-        "flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm";
-      btnCash.className =
-        "flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300";
-      pnlTransfer.classList.remove("hidden");
-      pnlCash.classList.add("hidden");
-    } else {
-      btnCash.className =
-        "flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm";
-      btnTransfer.className =
-        "flex-1 py-3 rounded-xl text-sm font-black transition flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300";
-      pnlCash.classList.remove("hidden");
-      pnlTransfer.classList.add("hidden");
-    }
+  function payWithMidtrans() {
+    const btn = document.getElementById('btn-midtrans');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+    
+    fetch("{{ url_for('main.payment', job_id=job.id) }}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token() }}"
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.token) {
+        window.snap.pay(data.token, {
+          onSuccess: function(result){
+            setTimeout(() => {
+                window.location.href = "{{ url_for('main.history') }}";
+            }, 2000);
+          },
+          onPending: function(result){
+            window.location.href = "{{ url_for('main.history') }}";
+          },
+          onError: function(result){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Bayar Sekarang';
+            alert("Pembayaran gagal!");
+          },
+          onClose: function(){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Bayar Sekarang';
+          }
+        });
+      } else {
+        alert("Gagal mendapatkan token pembayaran: " + (data.error || 'Unknown error'));
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-lock"></i> Bayar Sekarang';
+      }
+    })
+    .catch(err => {
+      alert("Terjadi kesalahan jaringan.");
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-lock"></i> Bayar Sekarang';
+    });
   }
 
   function previewFile(input) {
@@ -383,4 +457,9 @@ block content %}
     modal.classList.remove("flex");
   }
 </script>
+{% if config.MIDTRANS_IS_PRODUCTION %}
+<script src="https://app.midtrans.com/snap/snap.js" data-client-key="{{ config.MIDTRANS_CLIENT_KEY }}"></script>
+{% else %}
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config.MIDTRANS_CLIENT_KEY }}"></script>
+{% endif %}
 {% endblock %}
