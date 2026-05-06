@@ -3,6 +3,12 @@ import PyPDF2
 import time
 import zipfile
 import xml.etree.ElementTree as ET
+
+# Fix for PythonAnywhere free tier outbound proxy
+if 'PYTHONANYWHERE_SITE' in os.environ:
+    os.environ['http_proxy'] = 'http://proxy.server:3128'
+    os.environ['https_proxy'] = 'http://proxy.server:3128'
+
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash, current_app, 
     send_from_directory, abort, session, jsonify
@@ -201,7 +207,20 @@ def configure_jobs():
         flash(f'{len(files)} pekerjaan berhasil ditambahkan ke antrian!', 'success')
         return redirect(url_for('main.history'))
 
-    return render_template('user/configure.html', files=files)
+    def get_price(key, default):
+        p = PrintPricing.query.filter_by(setting_key=key).first()
+        return p.price if p else default
+        
+    pricing = {
+        'A4_BW': get_price('A4_BW', 250),
+        'A4_COLOR': get_price('A4_COLOR', 300),
+        'DISCOUNT_SELF': get_price('DISCOUNT_SELF', 150),
+        'MULT_A4': get_price('MULT_A4', 1.0),
+        'MULT_F4': get_price('MULT_F4', 1.0),
+        'MULT_A3': get_price('MULT_A3', 2.0),
+    }
+
+    return render_template('user/configure.html', files=files, pricing=pricing)
 
 @bp.route('/history')
 @login_required
