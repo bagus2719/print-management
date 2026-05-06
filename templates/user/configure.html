@@ -1,148 +1,256 @@
-{% extends 'layouts/app.html' %}
-{% block title %}Konfigurasi Pekerjaan{% endblock %}
-{% block content %}
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-slide-up" id="config-page-data" 
-     data-price-bw="250" 
-     data-price-color="300" 
-     data-discount-self="150"
-     data-multiplier-a4="1"
-     data-multiplier-f4="1"
-     data-multiplier-a3="2">
-    
-    <div class="bg-blue-800 px-6 py-5 border-b border-blue-900">
-        <h3 class="text-xl font-bold text-white flex items-center gap-3">
-            <i class="fas fa-sliders-h text-blue-300"></i>
-            Konfigurasi Pekerjaan Cetak
-        </h3>
+{% extends 'layouts/app.html' %} {% block title %}Konfigurasi Pekerjaan{%
+endblock %} {% block content %}
+<div
+  class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-slide-up"
+  id="config-page-data"
+  data-price-bw="250"
+  data-price-color="300"
+  data-discount-self="150"
+  data-multiplier-a4="1"
+  data-multiplier-f4="1"
+  data-multiplier-a3="2"
+>
+  <div class="bg-blue-800 px-6 py-5 border-b border-blue-900">
+    <h3 class="text-xl font-bold text-white flex items-center gap-3">
+      <i class="fas fa-sliders-h text-blue-300"></i>
+      Konfigurasi Pekerjaan Cetak
+    </h3>
+  </div>
+
+  <div class="p-6 sm:p-8">
+    <div
+      class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-start gap-3"
+    >
+      <div class="mt-0.5"><i class="fas fa-info-circle text-blue-500"></i></div>
+      <div>
+        <p class="text-sm font-bold text-blue-800">
+          {{ files|length }} file siap dikonfigurasi
+        </p>
+        <p class="text-sm text-blue-600 mt-0.5">
+          Silakan atur warna, ukuran kertas, sisi cetak, dan jumlah kopi untuk
+          masing-masing file.
+        </p>
+      </div>
     </div>
-    
-    <div class="p-6 sm:p-8">
-        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-start gap-3">
-            <div class="mt-0.5"><i class="fas fa-info-circle text-blue-500"></i></div>
+
+    <form method="POST" action="{{ url_for('main.configure_jobs') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div class="space-y-6 mb-8">
+        {% for file in files %}
+        <div
+          class="job-item border border-gray-200 rounded-xl p-5 hover:border-blue-300 transition-colors"
+          data-pages="{{ file.pages }}"
+        >
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100"
+          >
+            <div class="flex items-center gap-3">
+              {% set ext = file.ext|default(file.filename.rsplit('.',
+              1)[1]|lower) %} {% if ext == 'pdf' %}
+              <i class="far fa-file-pdf text-red-500 text-xl"></i>
+              {% elif ext in ['doc', 'docx'] %}
+              <i class="far fa-file-word text-blue-600 text-xl"></i>
+              {% elif ext in ['ppt', 'pptx'] %}
+              <i class="far fa-file-powerpoint text-orange-500 text-xl"></i>
+              {% elif ext in ['xls', 'xlsx'] %}
+              <i class="far fa-file-excel text-green-600 text-xl"></i>
+              {% elif ext in ['png', 'jpg', 'jpeg', 'webp'] %}
+              <i class="far fa-file-image text-purple-500 text-xl"></i>
+              {% else %}
+              <i class="far fa-file text-gray-500 text-xl"></i>
+              {% endif %}
+              <div>
+                <p class="text-base font-bold text-gray-800">
+                  {{ file.display_name }}
+                </p>
+                <div class="flex items-center gap-2 mt-1">
+                  <input
+                    type="number"
+                    name="pages_{{ loop.index0 }}"
+                    class="page-input w-16 px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                    value="{{ file.pages }}"
+                    min="1"
+                    required
+                  />
+                  <span class="text-xs text-gray-500">Halaman</span>
+                  {% if ext in ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'] %}
+                  <span
+                    class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold"
+                    >Cek ulang jml. halaman</span
+                  >
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <label class="text-sm font-semibold text-gray-700"
+                >Jumlah Kopi:</label
+              >
+              <input
+                type="number"
+                name="copies_{{ loop.index0 }}"
+                class="copy-input w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                value="1"
+                min="1"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-                <p class="text-sm font-bold text-blue-800">{{ files|length }} file siap dikonfigurasi</p>
-                <p class="text-sm text-blue-600 mt-0.5">Silakan atur warna, ukuran kertas, sisi cetak, dan jumlah kopi untuk masing-masing file.</p>
+              <label
+                class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2"
+                >Warna</label
+              >
+              <select
+                name="color_{{ loop.index0 }}"
+                class="color-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              >
+                <option value="bw">Hitam Putih</option>
+                <option value="color">Warna</option>
+              </select>
             </div>
+            <div>
+              <label
+                class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2"
+                >Ukuran Kertas</label
+              >
+              <select
+                name="size_{{ loop.index0 }}"
+                class="size-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              >
+                <option value="A4">A4</option>
+                <option value="F4">F4</option>
+                <option value="A3">A3</option>
+              </select>
+            </div>
+            <div>
+              <label
+                class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2"
+                >Sisi Cetak (Duplex)</label
+              >
+              <select
+                name="duplex_{{ loop.index0 }}"
+                class="duplex-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              >
+                <option value="0">1 Sisi (Simplex)</option>
+                <option value="1">Bolak-balik (Duplex)</option>
+              </select>
+            </div>
+          </div>
         </div>
-        
-        <form method="POST" action="{{ url_for('main.configure_jobs') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div class="space-y-6 mb-8">
-                {% for file in files %}
-                <div class="job-item border border-gray-200 rounded-xl p-5 hover:border-blue-300 transition-colors" data-pages="{{ file.pages }}">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
-                        <div class="flex items-center gap-3">
-                            {% set ext = file.ext|default(file.filename.rsplit('.', 1)[1]|lower) %}
-                            {% if ext == 'pdf' %}
-                            <i class="far fa-file-pdf text-red-500 text-xl"></i>
-                            {% elif ext in ['doc', 'docx'] %}
-                            <i class="far fa-file-word text-blue-600 text-xl"></i>
-                            {% elif ext in ['ppt', 'pptx'] %}
-                            <i class="far fa-file-powerpoint text-orange-500 text-xl"></i>
-                            {% elif ext in ['xls', 'xlsx'] %}
-                            <i class="far fa-file-excel text-green-600 text-xl"></i>
-                            {% elif ext in ['png', 'jpg', 'jpeg', 'webp'] %}
-                            <i class="far fa-file-image text-purple-500 text-xl"></i>
-                            {% else %}
-                            <i class="far fa-file text-gray-500 text-xl"></i>
-                            {% endif %}
-                            <div>
-                                <p class="text-base font-bold text-gray-800">{{ file.display_name }}</p>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <input type="number" name="pages_{{ loop.index0 }}" class="page-input w-16 px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-blue-500 outline-none" value="{{ file.pages }}" min="1" required>
-                                    <span class="text-xs text-gray-500">Halaman</span>
-                                    {% if ext in ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'] %}
-                                    <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">Cek ulang jml. halaman</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <label class="text-sm font-semibold text-gray-700">Jumlah Kopi:</label>
-                            <input type="number" name="copies_{{ loop.index0 }}" class="copy-input w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" value="1" min="1" required>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Warna</label>
-                            <select name="color_{{ loop.index0 }}" class="color-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                                <option value="bw">Hitam Putih</option>
-                                <option value="color">Warna</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Ukuran Kertas</label>
-                            <select name="size_{{ loop.index0 }}" class="size-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                                <option value="A4">A4</option>
-                                <option value="F4">F4</option>
-                                <option value="A3">A3</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Sisi Cetak (Duplex)</label>
-                            <select name="duplex_{{ loop.index0 }}" class="duplex-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                                <option value="0">1 Sisi (Simplex)</option>
-                                <option value="1">Bolak-balik (Duplex)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+        {% endfor %}
+      </div>
 
-            <div class="mb-8">
-                <label class="block text-base font-bold text-gray-800 mb-3">Sumber Kertas (Global)</label>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label class="relative flex p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors" id="card_us">
-                        <input type="radio" name="paper_source" value="dari_kami" class="paper-source-input sr-only" checked>
-                        <div class="flex items-center gap-4 w-full">
-                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-blue-600"><i class="fas fa-box text-xl"></i></div>
-                            <div class="flex-1">
-                                <p class="text-sm font-bold text-gray-800">Kertas dari Kami</p>
-                                <p class="text-xs text-gray-500 mt-1">Menggunakan kertas standar kami.</p>
-                            </div>
-                            <div class="check-icon text-blue-600 hidden"><i class="fas fa-check-circle text-xl"></i></div>
-                        </div>
-                    </label>
-                    <label class="relative flex p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors" id="card_self">
-                        <input type="radio" name="paper_source" value="bawa_sendiri" class="paper-source-input sr-only">
-                        <div class="flex items-center gap-4 w-full">
-                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-blue-600"><i class="fas fa-hand-holding text-xl"></i></div>
-                            <div class="flex-1">
-                                <p class="text-sm font-bold text-gray-800">Bawa Kertas Sendiri</p>
-                                <p class="text-xs text-blue-600 mt-1 font-semibold">Diskon Rp 150 / halaman</p>
-                            </div>
-                            <div class="check-icon text-blue-600 hidden"><i class="fas fa-check-circle text-xl"></i></div>
-                        </div>
-                    </label>
-                </div>
+      <div class="mb-8">
+        <label class="block text-base font-bold text-gray-800 mb-3"
+          >Sumber Kertas (Global)</label
+        >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label
+            class="relative flex p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors"
+            id="card_us"
+          >
+            <input
+              type="radio"
+              name="paper_source"
+              value="dari_kami"
+              class="paper-source-input sr-only"
+              checked
+            />
+            <div class="flex items-center gap-4 w-full">
+              <div
+                class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-blue-600"
+              >
+                <i class="fas fa-box text-xl"></i>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-bold text-gray-800">Kertas dari Kami</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  Menggunakan kertas standar kami.
+                </p>
+              </div>
+              <div class="check-icon text-blue-600 hidden">
+                <i class="fas fa-check-circle text-xl"></i>
+              </div>
             </div>
-            
-            <div class="bg-gray-50 border-t border-gray-200 -mx-6 -mb-6 sm:-mx-8 sm:-mb-8 p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div>
-                    <p class="text-sm font-bold text-gray-500 uppercase tracking-wide">Total Estimasi Biaya</p>
-                    <p class="text-3xl font-black text-blue-700 mt-1" id="total-cost-display">Rp 0</p>
-                </div>
-                <div class="flex gap-3 w-full sm:w-auto mt-4 sm:mt-0">
-                    <a href="{{ url_for('main.index') }}" class="px-6 py-3 rounded-xl text-sm font-bold text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 transition text-center flex-1 sm:flex-none">Batal</a>
-                    <button type="submit" class="px-6 py-3 rounded-xl text-sm font-bold text-white bg-blue-700 hover:bg-blue-800 shadow-md hover:shadow-lg transition flex-1 sm:flex-none flex items-center justify-center gap-2">
-                        <i class="fas fa-arrow-right"></i> Lanjutkan Pembayaran
-                    </button>
-                </div>
+          </label>
+          <label
+            class="relative flex p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors"
+            id="card_self"
+          >
+            <input
+              type="radio"
+              name="paper_source"
+              value="bawa_sendiri"
+              class="paper-source-input sr-only"
+            />
+            <div class="flex items-center gap-4 w-full">
+              <div
+                class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-blue-600"
+              >
+                <i class="fas fa-hand-holding text-xl"></i>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-bold text-gray-800">
+                  Bawa Kertas Sendiri
+                </p>
+                <p class="text-xs text-blue-600 mt-1 font-semibold">
+                  Diskon Rp 150 / halaman
+                </p>
+              </div>
+              <div class="check-icon text-blue-600 hidden">
+                <i class="fas fa-check-circle text-xl"></i>
+              </div>
             </div>
-        </form>
-    </div>
+          </label>
+        </div>
+      </div>
+
+      <div
+        class="bg-gray-50 border-t border-gray-200 -mx-6 -mb-6 sm:-mx-8 sm:-mb-8 p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-center gap-4"
+      >
+        <div>
+          <p class="text-sm font-bold text-gray-500 uppercase tracking-wide">
+            Total Estimasi Biaya
+          </p>
+          <p
+            class="text-3xl font-black text-blue-700 mt-1"
+            id="total-cost-display"
+          >
+            Rp 0
+          </p>
+        </div>
+        <div class="flex gap-3 w-full sm:w-auto mt-4 sm:mt-0">
+          <a
+            href="{{ url_for('main.index') }}"
+            class="px-6 py-3 rounded-xl text-sm font-bold text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 transition text-center flex-1 sm:flex-none"
+            >Batal</a
+          >
+          <button
+            type="submit"
+            class="px-6 py-3 rounded-xl text-sm font-bold text-white bg-blue-700 hover:bg-blue-800 shadow-md hover:shadow-lg transition flex-1 sm:flex-none flex items-center justify-center gap-2"
+          >
+            <i class="fas fa-arrow-right"></i> Lanjutkan Pembayaran
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const fmt = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);
-    const cp = document.getElementById('config-page-data');
-    
+  document.addEventListener("DOMContentLoaded", function () {
+    const fmt = (n) =>
+      new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+      }).format(n);
+    const cp = document.getElementById("config-page-data");
+
     // Pricing config
     const priceBw = parseInt(cp.dataset.priceBw);
     const priceColor = parseInt(cp.dataset.priceColor);
@@ -151,62 +259,69 @@ document.addEventListener('DOMContentLoaded', function() {
     const multF4 = parseFloat(cp.dataset.multiplierF4);
     const multA3 = parseFloat(cp.dataset.multiplierA3);
 
-    const cU = document.getElementById('card_us'), cS = document.getElementById('card_self');
-    
+    const cU = document.getElementById("card_us"),
+      cS = document.getElementById("card_self");
+
     function updateCards(v) {
-        [cU,cS].forEach(c => { 
-            c.classList.remove('border-blue-500', 'bg-blue-50'); 
-            c.querySelector('.check-icon').classList.add('hidden'); 
-        });
-        const active = v === 'dari_kami' ? cU : cS;
-        active.classList.add('border-blue-500', 'bg-blue-50');
-        active.querySelector('.check-icon').classList.remove('hidden');
+      [cU, cS].forEach((c) => {
+        c.classList.remove("border-blue-500", "bg-blue-50");
+        c.querySelector(".check-icon").classList.add("hidden");
+      });
+      const active = v === "dari_kami" ? cU : cS;
+      active.classList.add("border-blue-500", "bg-blue-50");
+      active.querySelector(".check-icon").classList.remove("hidden");
     }
 
     function calc() {
-        const src = document.querySelector('.paper-source-input:checked').value;
-        updateCards(src);
-        
-        let total = 0;
-        
-        document.querySelectorAll('.job-item').forEach(r => {
-            const pagesInput = r.querySelector('.page-input');
-            const pages = parseInt(pagesInput.value) || 0;
-            const copies = parseInt(r.querySelector('.copy-input').value) || 0;
-            const color = r.querySelector('.color-input').value;
-            const size = r.querySelector('.size-input').value;
-            const isDuplex = r.querySelector('.duplex-input').value === '1';
+      const src = document.querySelector(".paper-source-input:checked").value;
+      updateCards(src);
 
-            // Base price based on color
-            let basePrice = color === 'bw' ? priceBw : priceColor;
-            
-            // Apply size multiplier
-            let multiplier = 1;
-            if (size === 'F4') multiplier = multF4;
-            if (size === 'A3') multiplier = multA3;
-            
-            let pricePerPage = basePrice * multiplier;
-            
-            // Paper source discount
-            if (src === 'bawa_sendiri') {
-                pricePerPage -= discountSelf;
-            }
-            
-            // Ensure price isn't negative
-            if (pricePerPage < 0) pricePerPage = 0;
+      let total = 0;
 
-            total += pricePerPage * pages * copies;
-        });
-        
-        document.getElementById('total-cost-display').textContent = fmt(total);
+      document.querySelectorAll(".job-item").forEach((r) => {
+        const pagesInput = r.querySelector(".page-input");
+        const pages = parseInt(pagesInput.value) || 0;
+        const copies = parseInt(r.querySelector(".copy-input").value) || 0;
+        const color = r.querySelector(".color-input").value;
+        const size = r.querySelector(".size-input").value;
+        const isDuplex = r.querySelector(".duplex-input").value === "1";
+
+        // Base price based on color
+        let basePrice = color === "bw" ? priceBw : priceColor;
+
+        // Apply size multiplier
+        let multiplier = 1;
+        if (size === "F4") multiplier = multF4;
+        if (size === "A3") multiplier = multA3;
+
+        let pricePerPage = basePrice * multiplier;
+
+        // Paper source discount
+        if (src === "bawa_sendiri") {
+          pricePerPage -= discountSelf;
+        }
+
+        // Ensure price isn't negative
+        if (pricePerPage < 0) pricePerPage = 0;
+
+        total += pricePerPage * pages * copies;
+      });
+
+      document.getElementById("total-cost-display").textContent = fmt(total);
     }
 
     // Attach listeners
-    document.querySelectorAll('.copy-input, .color-input, .size-input, .duplex-input, .page-input').forEach(i => i.addEventListener('input', calc));
-    document.querySelectorAll('.paper-source-input').forEach(i => i.addEventListener('change', calc));
-    
+    document
+      .querySelectorAll(
+        ".copy-input, .color-input, .size-input, .duplex-input, .page-input",
+      )
+      .forEach((i) => i.addEventListener("input", calc));
+    document
+      .querySelectorAll(".paper-source-input")
+      .forEach((i) => i.addEventListener("change", calc));
+
     // Initial calc
     calc();
-});
+  });
 </script>
 {% endblock %}
