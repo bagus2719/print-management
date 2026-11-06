@@ -39,7 +39,7 @@ with app.app_context():
     accounts = [
         PaymentAccount(method='bca', label='Bank BCA', account_number='8162054219', account_name='Bagus Tri Al Ahmadi'),
         PaymentAccount(method='dana', label='DANA', account_number='081332090934', account_name='Bagus Tri Al Ahmadi'),
-        PaymentAccount(method='shopeepay', label='ShopeePay', account_number='083111481327', account_name='Bagus Tri Al Ahmadi'),
+        PaymentAccount(method='shopeepay', label='ShopeePay', account_number='081332090934', account_name='Bagus Tri Al Ahmadi'),
         PaymentAccount(method='qris', label='QRIS', account_number='Bagus Tri Al Ahmadi', account_name='Bagus Tri'),
     ]
     db.session.add_all(accounts)

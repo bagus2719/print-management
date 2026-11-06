@@ -192,5 +192,5 @@ Project ini dibuat untuk keperluan pribadi / tugas.
 
 - **Nama:** Bagus Tri Al Ahmadi
 - **Email:** bagustrialahmadi27@gmail.com
-- **WhatsApp:** [083111481327](https://wa.me/6283111481327)
+- **WhatsApp:** [081332090934](https://wa.me/6281332090934)
 
