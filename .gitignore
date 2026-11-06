@@ -7,7 +7,7 @@ __pycache__/
 venv/
 .venv/
 
-# Instance Folder (database)
+# Instance Folder (database, session json, logs)
 instance/
 
 # Uploads (user-generated files)
@@ -27,5 +27,16 @@ uploads/
 .DS_Store
 Thumbs.db
 
-# Flask
+# Flask & SQLite
 *.db
+db_pythonanywhere/
+
+# Catatan internal / temporary
+1.txt
+*.log
+
+db_pythonanywhere/
+
+# Catatan internal / temporary
+1.txt
+*.log

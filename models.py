@@ -1,15 +1,20 @@
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from extensions import db, login_manager
 
+def utc_now():
+    """Mengembalikan datetime UTC saat ini (naive) agar kompatibel dengan SQLite & Python 3.12+."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
+    email = db.Column(db.String(120), index=True, unique=True, nullable=True)
     password_hash = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
     jobs = db.relationship('PrintJob', backref='author', lazy='dynamic')
     payments = db.relationship('Payment', backref='payer', lazy='dynamic')
 
@@ -45,11 +50,11 @@ class PrintJob(db.Model):
     is_duplex = db.Column(db.Boolean, default=False)
     
     total_cost = db.Column(db.Float, default=0.0)
-    upload_time = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    upload_time = db.Column(db.DateTime, index=True, default=utc_now)
     status = db.Column(db.String(50), default='pending')
     payment_status = db.Column(db.String(50), default='unpaid')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    payment = db.relationship('Payment', backref='job', uselist=False)
+    payment = db.relationship('Payment', backref='job', uselist=False, cascade='all, delete-orphan')
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -61,7 +66,7 @@ class Payment(db.Model):
     proof_filename = db.Column(db.String(255), nullable=True)
     midtrans_transaction_id = db.Column(db.String(255), nullable=True, unique=True)
     status = db.Column(db.String(50), default='pending')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
     confirmed_at = db.Column(db.DateTime, nullable=True)
     notes = db.Column(db.Text, nullable=True)
 
@@ -79,7 +84,7 @@ class ChatMessage(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     message = db.Column(db.Text, nullable=False)
     is_from_admin = db.Column(db.Boolean, default=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=utc_now)
     is_read = db.Column(db.Boolean, default=False)
     
     user = db.relationship('User', backref=db.backref('chat_messages', lazy='dynamic'))

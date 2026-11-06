@@ -36,13 +36,20 @@ def migrate():
         except sqlite3.OperationalError:
             print(f"- Kolom '{col_name}' sudah ada.")
 
-    # 2. Tambah kolom ke tabel print_job
+    # 2. Tambah kolom ke tabel print_job & user
     try:
         cursor.execute("ALTER TABLE print_job ADD COLUMN color_mode VARCHAR(50) DEFAULT 'bw'")
         cursor.execute("ALTER TABLE print_job ADD COLUMN is_duplex BOOLEAN DEFAULT 0")
         print("- Kolom 'color_mode' dan 'is_duplex' ditambahkan ke tabel 'print_job'")
     except sqlite3.OperationalError:
         print("- Kolom di 'print_job' sudah ada.")
+
+    try:
+        cursor.execute("ALTER TABLE user ADD COLUMN email VARCHAR(120)")
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_user_email ON user(email)")
+        print("- Kolom 'email' ditambahkan ke tabel 'user'")
+    except sqlite3.OperationalError:
+        print("- Kolom 'email' di tabel 'user' sudah ada.")
 
     # 3. Buat tabel print_pricing
     cursor.execute("""

@@ -1,4 +1,7 @@
 import os
+import re
+import json
+import secrets
 import PyPDF2
 import time
 import zipfile
@@ -15,7 +18,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from models import PrintJob, Payment, PaymentAccount, PrintPricing, ChatMessage
+from models import PrintJob, Payment, PaymentAccount, PrintPricing, ChatMessage, utc_now
 from extensions import db
 import midtransclient
 from PIL import Image
@@ -104,6 +107,40 @@ def calculate_cost(pages, copies, color_mode, paper_size, paper_source):
         
     return price_per_page * pages * copies
 
+def _save_upload_session(files_data):
+    """Menyimpan data file upload ke file JSON server agar session cookie tidak overflow."""
+    session_dir = os.path.join(current_app.instance_path, 'upload_sessions')
+    os.makedirs(session_dir, exist_ok=True)
+    token = secrets.token_hex(16)
+    file_path = os.path.join(session_dir, f"{token}.json")
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(files_data, f)
+    return token
+
+def _load_upload_session(token):
+    """Membaca data file upload dari file JSON server."""
+    if not token:
+        return None
+    file_path = os.path.join(current_app.instance_path, 'upload_sessions', f"{token}.json")
+    if not os.path.exists(file_path):
+        return None
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+def _clear_upload_session(token):
+    """Menghapus file upload session dari server setelah selesai dikonfigurasi."""
+    if not token:
+        return
+    file_path = os.path.join(current_app.instance_path, 'upload_sessions', f"{token}.json")
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    except OSError:
+        pass
+
 @bp.route('/', methods=('GET', 'POST'))
 @login_required
 def index():
@@ -158,7 +195,8 @@ def index():
                 flash(f'File "{file.filename}" memiliki format yang tidak didukung. Harap upload PDF, Word, atau Gambar.', 'warning')
 
         if files_for_configuration:
-            session['files_to_configure'] = files_for_configuration
+            session_token = _save_upload_session(files_for_configuration)
+            session['upload_config_token'] = session_token
             return redirect(url_for('main.configure_jobs'))
         else:
             flash('Tidak ada file valid yang berhasil diupload.', 'danger')
@@ -170,9 +208,10 @@ def index():
 @bp.route('/configure', methods=['GET', 'POST'])
 @login_required
 def configure_jobs():
-    files = session.get('files_to_configure')
+    session_token = session.get('upload_config_token')
+    files = _load_upload_session(session_token)
     if not files:
-        flash('Tidak ada file untuk dikonfigurasi. Silakan upload terlebih dahulu.', 'warning')
+        flash('Tidak ada file untuk dikonfigurasi atau sesi telah berakhir. Silakan upload terlebih dahulu.', 'warning')
         return redirect(url_for('main.index'))
 
     if request.method == 'POST':
@@ -203,7 +242,8 @@ def configure_jobs():
                 db.session.add(new_job)
 
         db.session.commit()
-        session.pop('files_to_configure', None)
+        _clear_upload_session(session_token)
+        session.pop('upload_config_token', None)
         flash(f'{len(files)} pekerjaan berhasil ditambahkan ke antrian!', 'success')
         return redirect(url_for('main.history'))
 
@@ -226,6 +266,9 @@ def configure_jobs():
 @login_required
 def history():
     sort_by = request.args.get('sort_by', 'time_desc')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+
     query = PrintJob.query.filter_by(user_id=current_user.id)
     if sort_by == 'time_asc':
         query = query.order_by(PrintJob.upload_time.asc())
@@ -236,8 +279,14 @@ def history():
     else:
         query = query.order_by(PrintJob.upload_time.desc())
 
-    user_jobs = query.all()
-    total_cost_all = sum(job.total_cost for job in user_jobs)
+    # Pagination
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    user_jobs = pagination.items
+
+    # Statistik Akurat (seluruh riwayat user)
+    total_cost_all = db.session.query(db.func.sum(PrintJob.total_cost)).filter_by(user_id=current_user.id).scalar() or 0.0
+    completed_jobs_count = PrintJob.query.filter_by(user_id=current_user.id, status='completed').count()
+    pending_jobs_count = PrintJob.query.filter_by(user_id=current_user.id, status='pending').count()
     
     # Quick Stats Data
     recent_jobs = PrintJob.query.filter_by(user_id=current_user.id).order_by(PrintJob.upload_time.desc()).limit(5).all()
@@ -245,7 +294,10 @@ def history():
 
     return render_template('user/history.html', 
                            jobs=user_jobs,
+                           pagination=pagination,
                            total_cost_all=total_cost_all,
+                           completed_jobs_count=completed_jobs_count,
+                           pending_jobs_count=pending_jobs_count,
                            recent_jobs=recent_jobs,
                            total_cost_recent=total_cost_recent,
                            current_sort_by=sort_by)
@@ -254,12 +306,35 @@ def history():
 @login_required
 def profile():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip().lower() or None
+        password = request.form.get('password', '')
 
         if username and username != current_user.username:
+            if len(username) < 3 or not re.match(r'^[a-zA-Z0-9_]+$', username):
+                flash('Username minimal 3 karakter dan hanya huruf/angka/underscore.', 'danger')
+                return redirect(url_for('main.profile'))
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user and existing_user.id != current_user.id:
+                flash(f"Username '{username}' sudah digunakan.", 'danger')
+                return redirect(url_for('main.profile'))
             current_user.username = username
+
+        if email != current_user.email:
+            if email and not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+                flash('Format email tidak valid.', 'danger')
+                return redirect(url_for('main.profile'))
+            if email:
+                existing_email = User.query.filter_by(email=email).first()
+                if existing_email and existing_email.id != current_user.id:
+                    flash(f"Email '{email}' sudah terdaftar untuk akun lain.", 'danger')
+                    return redirect(url_for('main.profile'))
+            current_user.email = email
+
         if password:
+            if len(password) < 6:
+                flash('Password baru minimal 6 karakter.', 'danger')
+                return redirect(url_for('main.profile'))
             current_user.set_password(password)
 
         db.session.commit()
@@ -392,27 +467,69 @@ def payment_transfer(job_id):
     flash('Pembayaran tercatat! Menunggu konfirmasi admin.', 'success')
     return redirect(url_for('main.history'))
 
+import hashlib
 from extensions import csrf
 from datetime import datetime
+
+def verify_midtrans_signature(data, server_key):
+    """Verifikasi signature key dari notifikasi webhook Midtrans."""
+    order_id = str(data.get('order_id', ''))
+    status_code = str(data.get('status_code', ''))
+    gross_amount = str(data.get('gross_amount', ''))
+    received_signature = data.get('signature_key', '')
+
+    if not all([order_id, status_code, gross_amount, received_signature, server_key]):
+        return False
+
+    raw_signature_str = f"{order_id}{status_code}{gross_amount}{server_key}"
+    calculated_signature = hashlib.sha512(raw_signature_str.encode('utf-8')).hexdigest()
+    return calculated_signature.lower() == str(received_signature).lower()
 
 @bp.route('/midtrans_webhook', methods=['POST'])
 @csrf.exempt
 def midtrans_webhook():
-    data = request.json
+    data = request.get_json(silent=True)
     if not data:
-        return jsonify({'status': 'error'}), 400
-        
+        return jsonify({'status': 'error', 'message': 'Payload JSON tidak valid'}), 400
+
+    server_key = current_app.config.get('MIDTRANS_SERVER_KEY')
+    if not server_key:
+        return jsonify({'status': 'error', 'message': 'MIDTRANS_SERVER_KEY belum dikonfigurasi'}), 500
+
+    # 1. Verifikasi Keaslian Notifikasi (Signature Key)
+    if not verify_midtrans_signature(data, server_key):
+        return jsonify({'status': 'error', 'message': 'Signature tidak valid'}), 403
+
     order_id = data.get('order_id')
     transaction_status = data.get('transaction_status')
-    
-    if order_id and transaction_status in ['capture', 'settlement']:
-        payment = Payment.query.filter_by(midtrans_transaction_id=order_id).first()
-        if payment:
+    fraud_status = data.get('fraud_status')
+
+    payment = Payment.query.filter_by(midtrans_transaction_id=order_id).first()
+    if not payment:
+        return jsonify({'status': 'error', 'message': 'Data transaksi pembayaran tidak ditemukan'}), 404
+
+    # 2. Update status berdasarkan status transaksi Midtrans
+    if transaction_status == 'capture':
+        if fraud_status == 'accept':
             payment.status = 'confirmed'
-            payment.confirmed_at = datetime.utcnow()
+            payment.confirmed_at = utc_now()
+            if payment.job:
+                payment.job.payment_status = 'paid'
+        elif fraud_status == 'challenge':
+            payment.status = 'challenge'
+    elif transaction_status == 'settlement':
+        payment.status = 'confirmed'
+        payment.confirmed_at = utc_now()
+        if payment.job:
             payment.job.payment_status = 'paid'
-            db.session.commit()
-            
+    elif transaction_status in ['deny', 'cancel', 'expire']:
+        payment.status = 'failed'
+        if payment.job:
+            payment.job.payment_status = 'unpaid'
+    elif transaction_status == 'pending':
+        payment.status = 'pending'
+
+    db.session.commit()
     return jsonify({'status': 'ok'})
 
 
@@ -444,7 +561,7 @@ def check_payment_status(job_id):
         
         if transaction_status in ['capture', 'settlement']:
             payment.status = 'confirmed'
-            payment.confirmed_at = datetime.utcnow()
+            payment.confirmed_at = utc_now()
             job.payment_status = 'paid'
             db.session.commit()
             return jsonify({'status': 'paid'})

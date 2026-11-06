@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from functools import wraps
-from models import PrintJob, User, Payment, PaymentAccount, ChatMessage
+from models import PrintJob, User, Payment, PaymentAccount, ChatMessage, utc_now
 from extensions import db
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -49,6 +49,9 @@ def manage_jobs():
     status_filter = request.args.get('status', '')
     user_filter = request.args.get('user_id', '')
     sort_by = request.args.get('sort_by', 'time_desc')
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
+
     query = PrintJob.query.join(User, PrintJob.user_id == User.id)
     if status_filter:
         query = query.filter(PrintJob.status == status_filter)
@@ -63,12 +66,17 @@ def manage_jobs():
     else: 
         query = query.order_by(PrintJob.upload_time.desc())
 
-    all_jobs = query.all()
+    # Total biaya dari query yang terfilter
+    subq = query.subquery()
+    total_cost_filtered = db.session.query(db.func.sum(subq.c.total_cost)).scalar() or 0.0
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    all_jobs = pagination.items
     all_users = User.query.filter(User.is_admin == False).order_by(User.username).all()
-    total_cost_filtered = sum(job.total_cost for job in all_jobs)
 
     return render_template('admin/jobs.html', 
                            jobs=all_jobs, 
+                           pagination=pagination,
                            users=all_users,
                            total_cost_filtered=total_cost_filtered,
                            current_status=status_filter,
@@ -88,14 +96,39 @@ def update_status(job_id, new_status):
         flash('Status tidak valid.', 'error')
     return redirect(request.referrer or url_for('admin.manage_jobs'))
 
+def _delete_job_files(job):
+    """Menghapus file dokumen cetak dan bukti transfer fisik dari server storage."""
+    upload_folder = current_app.config.get('UPLOAD_FOLDER')
+    if not upload_folder:
+        return
+
+    # 1. Hapus file dokumen cetak utama
+    if job.filename:
+        file_path = os.path.join(upload_folder, job.filename)
+        try:
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        except OSError:
+            pass
+
+    # 2. Hapus file bukti pembayaran jika ada
+    if job.payment and job.payment.proof_filename:
+        proof_path = os.path.join(upload_folder, 'proofs', job.payment.proof_filename)
+        try:
+            if os.path.isfile(proof_path):
+                os.remove(proof_path)
+        except OSError:
+            pass
+
 @bp.route('/delete_job/<int:job_id>', methods=['POST'])
 @login_required
 @admin_required
 def delete_job(job_id):
     job = PrintJob.query.get_or_404(job_id)
+    _delete_job_files(job)
     db.session.delete(job)
     db.session.commit()
-    flash(f'Pekerjaan "{job.display_name}" berhasil dihapus.', 'info')
+    flash(f'Pekerjaan "{job.display_name}" beserta file terkait berhasil dihapus.', 'info')
     return redirect(request.referrer or url_for('admin.manage_jobs'))
 
 @bp.route('/bulk_delete', methods=['POST'])
@@ -109,10 +142,11 @@ def bulk_delete():
     
     jobs_to_delete = PrintJob.query.filter(PrintJob.id.in_(job_ids)).all()
     for job in jobs_to_delete:
+        _delete_job_files(job)
         db.session.delete(job)
     db.session.commit()
     
-    flash(f'{len(job_ids)} pekerjaan berhasil dihapus.', 'success')
+    flash(f'{len(job_ids)} pekerjaan beserta file berhasil dihapus.', 'success')
     return redirect(request.referrer or url_for('admin.manage_jobs'))
 
 # --- MANAGE USERS ---
@@ -120,8 +154,9 @@ def bulk_delete():
 @login_required
 @admin_required
 def manage_users():
-    users = User.query.order_by(User.created_at.desc()).all()
-    return render_template('admin/users.html', users=users)
+    page = request.args.get('page', 1, type=int)
+    pagination = User.query.order_by(User.created_at.desc()).paginate(page=page, per_page=15, error_out=False)
+    return render_template('admin/users.html', users=pagination.items, pagination=pagination)
 
 @bp.route('/users/toggle_admin/<int:user_id>', methods=['POST'])
 @login_required
@@ -170,11 +205,12 @@ def admin_reset_password(user_id):
 @admin_required
 def manage_payments():
     status_filter = request.args.get('status', '')
+    page = request.args.get('page', 1, type=int)
     query = Payment.query.join(User, Payment.user_id == User.id)
     if status_filter:
         query = query.filter(Payment.status == status_filter)
-    payments = query.order_by(Payment.created_at.desc()).all()
-    return render_template('admin/payments.html', payments=payments, current_status=status_filter)
+    pagination = query.order_by(Payment.created_at.desc()).paginate(page=page, per_page=15, error_out=False)
+    return render_template('admin/payments.html', payments=pagination.items, pagination=pagination, current_status=status_filter)
 
 @bp.route('/payments/confirm/<int:payment_id>', methods=['POST'])
 @login_required
@@ -182,7 +218,7 @@ def manage_payments():
 def confirm_payment(payment_id):
     payment = Payment.query.get_or_404(payment_id)
     payment.status = 'confirmed'
-    payment.confirmed_at = datetime.utcnow()
+    payment.confirmed_at = utc_now()
     payment.job.payment_status = 'paid'
     db.session.commit()
     flash(f'Pembayaran #{payment.id} berhasil dikonfirmasi.', 'success')
@@ -218,12 +254,12 @@ def set_payment_status(job_id, new_status):
                 amount=job.total_cost,
                 method='manual',
                 status='confirmed',
-                confirmed_at=datetime.utcnow()
+                confirmed_at=utc_now()
             )
             db.session.add(manual_payment)
         else:
             existing.status = 'confirmed'
-            existing.confirmed_at = datetime.utcnow()
+            existing.confirmed_at = utc_now()
         flash(f'Pembayaran "{job.display_name}" ditandai LUNAS.', 'success')
     elif new_status == 'unpaid':
         job.payment_status = 'unpaid'
@@ -319,7 +355,7 @@ def delete_payment_account(acc_id):
 @admin_required
 def manage_chats():
     # Cleanup old messages (> 7 days)
-    week_ago = datetime.utcnow() - timedelta(days=7)
+    week_ago = utc_now() - timedelta(days=7)
     deleted_count = ChatMessage.query.filter(ChatMessage.timestamp < week_ago).delete()
     if deleted_count > 0:
         db.session.commit()

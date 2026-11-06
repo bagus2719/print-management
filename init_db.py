@@ -1,3 +1,4 @@
+import os
 from app import create_app
 from extensions import db
 from models import User, Payment, PaymentAccount, PrintPricing
@@ -10,17 +11,20 @@ with app.app_context():
     print("Membuat tabel baru...")
     db.create_all()
 
+    admin_pass = os.environ.get('INITIAL_ADMIN_PASSWORD', 'admin123')
+    user_pass = os.environ.get('INITIAL_USER_PASSWORD', 'bagus123')
+
     print("Membuat user admin...")
-    admin = User(username='admin', is_admin=True)
-    admin.set_password('admin123')
+    admin = User(username='admin', email='admin@printmanager.com', is_admin=True)
+    admin.set_password(admin_pass)
     db.session.add(admin)
 
     print("Membuat user biasa...")
-    user = User(username='bagus')
-    user.set_password('bagus123')
+    user = User(username='bagus', email='bagus@printmanager.com')
+    user.set_password(user_pass)
     db.session.add(user)
 
-    print("Membuat pengaturan harga cetak...")
+    print("Membuat pengaturan harga cetak default...")
     pricing_config = [
         PrintPricing(setting_key='A4_BW', setting_name='A4 Hitam Putih (Dasar)', price=250.0, description='Harga dasar per halaman untuk A4 B&W'),
         PrintPricing(setting_key='A4_COLOR', setting_name='A4 Warna (Dasar)', price=300.0, description='Harga dasar per halaman untuk A4 Warna'),
@@ -41,5 +45,12 @@ with app.app_context():
     db.session.add_all(accounts)
     
     db.session.commit()
-    print("User 'admin' (pass: admin123) dan 'bagus' (pass: bagus123) berhasil dibuat.")
-    print("Inisialisasi database selesai.")
+    print("=" * 60)
+    print("Inisialisasi database berhasil!")
+    print(f"Akun Admin : admin (password: {admin_pass})")
+    print(f"Akun User  : bagus (password: {user_pass})")
+    if admin_pass == 'admin123':
+        print("\n[PERINGATAN KEAMANAN]")
+        print("Anda menggunakan password default 'admin123'.")
+        print("Harap segera ganti password akun admin setelah login di production!")
+    print("=" * 60)
